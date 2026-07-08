@@ -3,8 +3,10 @@ import { getIntegrationRecipe, getPaymentStatusReference, getSdkApiReference, li
 
 describe('docs registry', () => {
   it('lists versioned web sdk resources', () => {
-    expect(listResourceUris()).toContain('tonder://web-sdk/0.1.1/readme');
-    expect(listResourceUris()).toContain('tonder://web-sdk/0.1.1/sections/pay');
+    const resources = listResourceUris();
+    const version = resources[0].split('/')[3];
+    expect(resources).toContain(`tonder://web-sdk/${version}/readme`);
+    expect(resources).toContain(`tonder://web-sdk/${version}/sections/pay`);
   });
 
   it('returns API reference content by topic', () => {
@@ -15,6 +17,14 @@ describe('docs registry', () => {
 
   it('returns a card payment recipe', () => {
     const recipe = getIntegrationRecipe({ sdk: 'web-sdk', version: '0.1.0', framework: 'react', flow: 'card_payment', presentation_mode: 'embedded' });
+    expect(recipe.content).toContain('card_fields');
+    expect(recipe.content).toContain('payment_method');
+  });
+
+  it('returns a card payment recipe from the default latest docs version', () => {
+    const recipe = getIntegrationRecipe({ sdk: 'web-sdk', framework: 'html', flow: 'card_payment', presentation_mode: 'embedded' });
+    const resources = listResourceUris();
+    expect(resources).toContain(`tonder://web-sdk/${recipe.version}/readme`);
     expect(recipe.content).toContain('card_fields');
     expect(recipe.content).toContain('payment_method');
   });

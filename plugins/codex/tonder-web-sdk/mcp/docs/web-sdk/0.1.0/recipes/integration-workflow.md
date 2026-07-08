@@ -44,7 +44,7 @@ Ask for optional behavior only after required decisions are known. Keep the defa
 | Embedded presentation callbacks | `presentation_mode` is `embedded` and developer wants UI side effects | Add `events.presentation.on_open` / `on_close` only for requested behavior |
 | Field events | Developer wants validation state/focus analytics | Add `card_fields` `events` callbacks; never read raw PAN/CVV values |
 | Custom container IDs | Existing markup already has stable containers | Pass `fields` with `container_id`; otherwise use default container IDs |
-| Metadata | Merchant wants order/cart context in the transaction | Add `metadata` with non-sensitive fields |
+| Metadata | Merchant wants report/reconciliation context in the transaction | Add non-sensitive `metadata`; reporting-friendly keys include `customer_email`, `customer_id`, `business_user`, and `operation_date` |
 | Idempotency key | Always include for payments | Add `idempotency_key` with a short code comment explaining that it makes checkout retries safe and prevents duplicate charges. Use a stable value per checkout attempt; do not reuse `client_reference` as fallback. |
 
 ## Data safety

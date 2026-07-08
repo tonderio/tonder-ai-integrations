@@ -2,6 +2,14 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.8 - 2026-07-08
+
+### Fixed
+
+- Synced Web SDK docs `0.1.2` from GitHub with payment reporting guidance for `client_reference` and reporting-friendly `metadata` fields.
+- Updated agent summary guidance to briefly mention `client_reference`, retry-safe `idempotency_key`, optional metadata for reports, and webhook reconciliation.
+- Ensured generated Web SDK documentation snapshots include maintained integration recipes.
+
 ## 0.1.7 - 2026-07-08
 
 ### Fixed

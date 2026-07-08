@@ -145,11 +145,28 @@ The plugin guides the agent to:
 
 ## Development workflow
 
-Edit source files, refresh SDK docs, sync generated plugin packages, then validate:
+Use short-lived branches for all changes. Keep `main` stable and releasable.
+
+```bash
+git checkout main
+git pull
+git checkout -b feature/<short-description>
+```
+
+The day-to-day rule is simple:
+
+1. Edit source files, not generated plugin copies.
+2. Always run the Web SDK docs sync from GitHub.
+3. Sync the generated Claude/Codex plugin packages.
+4. Validate and test before merging.
+5. Squash merge to `main`.
+
+Quick validation path:
 
 ```bash
 cd packages/tonder-mcp
 npm run sync:docs
+npm test
 npm run build
 cd ../..
 
@@ -160,23 +177,21 @@ claude plugin validate .
 
 python3 /Users/dave/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py \
   ./plugins/codex/tonder-web-sdk
-
-cd packages/tonder-mcp
-npm test
-npm run build
 ```
 
-Detailed maintainer instructions are in [`docs/maintainers/README.md`](docs/maintainers/README.md).
+For complete branch, local testing, and release instructions, see [`docs/maintainers/README.md`](docs/maintainers/README.md).
 
 ## Release tags
 
-The release tag, for example `tonder-web-sdk--v0.1.6`, pins an immutable plugin version for marketplaces and users.
+The release tag, for example `tonder-web-sdk--v0.1.7`, pins an immutable plugin version for marketplaces and users.
 
 It matters because:
 
 - Claude's release helper validates that the plugin manifest and marketplace version agree before tagging.
 - Codex marketplace entries can pin the plugin source to a known tag instead of moving with every `main` update.
 - Users and maintainers can reproduce exactly what was released.
+
+After a release is public, do not move or rewrite its tag. Publish a new patch version instead.
 
 ## Security
 

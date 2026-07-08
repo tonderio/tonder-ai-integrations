@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -48,7 +48,7 @@ async function fetchText(url, accept) {
     try {
       return execFileSync(
         'gh',
-        ['api', `repos/${owner}/${repo}/contents/${filePath}`, '-f', `ref=${ref}`, '-H', 'Accept: application/vnd.github.raw'],
+        ['api', `repos/${owner}/${repo}/contents/${filePath}?ref=${ref}`, '-H', 'Accept: application/vnd.github.raw'],
         { encoding: 'utf8' },
       );
     } catch (error) {
@@ -95,6 +95,35 @@ function splitSections(markdown) {
   return sections;
 }
 
+
+function compareSemverDesc(a, b) {
+  const left = a.split('.').map((part) => Number.parseInt(part, 10));
+  const right = b.split('.').map((part) => Number.parseInt(part, 10));
+  for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+    const diff = (right[index] || 0) - (left[index] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+function findMaintainedRecipesDir() {
+  const sdkDocsRoot = path.join(root, 'docs', 'web-sdk');
+  if (!existsSync(sdkDocsRoot)) return null;
+
+  const versions = readdirSync(sdkDocsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .filter((entryVersion) => entryVersion !== version)
+    .sort(compareSemverDesc);
+
+  for (const entryVersion of versions) {
+    const recipesDir = path.join(sdkDocsRoot, entryVersion, 'recipes');
+    if (existsSync(recipesDir)) return recipesDir;
+  }
+
+  return null;
+}
+
 const source = await readSource();
 rmSync(sectionsDir, { recursive: true, force: true });
 mkdirSync(sectionsDir, { recursive: true });
@@ -106,6 +135,14 @@ for (const section of sections) {
   writeFileSync(path.join(sectionsDir, filename), section.lines.join('\n').trim() + '\n');
   manifestSections[section.slug] = { title: section.title, path: `sections/${filename}` };
 }
+const recipesSourceDir = findMaintainedRecipesDir();
+if (recipesSourceDir) {
+  const recipesTargetDir = path.join(outDir, 'recipes');
+  rmSync(recipesTargetDir, { recursive: true, force: true });
+  cpSync(recipesSourceDir, recipesTargetDir, { recursive: true });
+  console.log(`Copied maintained recipes from ${path.relative(root, recipesSourceDir)}`);
+}
+
 const manifest = {
   sdk: 'web-sdk',
   version,

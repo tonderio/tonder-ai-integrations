@@ -7,8 +7,9 @@ Before finishing an integration, verify:
 - New card and CVV data are collected only through SDK secure fields.
 - No raw PAN/CVV fields exist in merchant code.
 - Secure-field container divs are not wrapped with merchant labels or styled like input cards; the SDK owns labels, borders, validation, and errors inside the iframe.
-- `client_reference` is present for payments.
+- `client_reference` is present for payments and represents the merchant order/reference shown in dashboards, reports, webhooks, and transaction records.
 - `idempotency_key` is present for payments, uses a stable value per checkout attempt, and includes a code comment explaining why it prevents duplicate charges on retries.
+- Optional `metadata` stays non-sensitive; when report context is needed, prefer `customer_email`, `customer_id`, `business_user`, or `operation_date`.
 - `return_url` is included when hosted/3DS completion may be needed.
 - CDN integrations in TypeScript projects either add a type-only `@tonder.io/web-sdk` devDependency with `import type`, or add a minimal local ambient `window.Tonder` declaration. Runtime imports from npm are not used in CDN mode.
 - `session.customer` is present for customer-dependent flows.
