@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "tonder-docs": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/dist/server.js"
+      ],
+      "startup_timeout_sec": 10,
+      "tool_timeout_sec": 60
+    }
+  }
+}

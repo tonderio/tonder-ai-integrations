@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "tonder-ai-integrations",
+  "version": "0.1.7",
+  "description": "AI-assisted Tonder SDK integration plugins.",
+  "owner": {
+    "name": "Tonder",
+    "url": "https://github.com/tonderio"
+  },
+  "plugins": [
+    {
+      "name": "tonder-web-sdk",
+      "description": "Integrate the Tonder Web SDK into browser-based web apps.",
+      "version": "0.1.7",
+      "source": "./plugins/claude-code/tonder-web-sdk",
+      "category": "development",
+      "author": {
+        "name": "Tonder",
+        "url": "https://github.com/tonderio"
+      },
+      "license": "MIT"
+    }
+  ]
+}

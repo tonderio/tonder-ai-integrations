@@ -1,0 +1,32 @@
+{
+  "name": "@tonder/mcp",
+  "version": "0.1.0",
+  "description": "Local MCP server for Tonder SDK documentation, recipes, errors, and payment statuses.",
+  "type": "module",
+  "bin": {
+    "tonder-mcp": "dist/server.js"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit && node scripts/build-bundle.mjs",
+    "test": "vitest run",
+    "sync:docs": "node scripts/sync-web-sdk-docs.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "esbuild": "^0.28.1",
+    "typescript": "latest",
+    "vitest": "latest"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

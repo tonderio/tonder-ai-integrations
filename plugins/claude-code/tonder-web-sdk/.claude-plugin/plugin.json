@@ -1,0 +1,20 @@
+{
+  "name": "tonder-web-sdk",
+  "version": "0.1.7",
+  "description": "Integrate the Tonder Web SDK into browser-based web apps.",
+  "author": {
+    "name": "Tonder",
+    "url": "https://github.com/tonderio"
+  },
+  "displayName": "Tonder Web SDK",
+  "license": "MIT",
+  "homepage": "https://github.com/tonderio/tonder-ai-integrations",
+  "repository": "https://github.com/tonderio/tonder-ai-integrations",
+  "keywords": [
+    "tonder",
+    "payments",
+    "web-sdk",
+    "mcp",
+    "checkout"
+  ]
+}

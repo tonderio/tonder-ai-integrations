@@ -1,0 +1,69 @@
+{
+  "sdk": "web-sdk",
+  "version": "0.1.0",
+  "package_name": "@tonder.io/web-sdk",
+  "package_json_url": "https://raw.githubusercontent.com/tonderio/web-sdk/main/package.json",
+  "source": "https://raw.githubusercontent.com/tonderio/web-sdk/main/README.md",
+  "source_url": "https://raw.githubusercontent.com/tonderio/web-sdk/main/README.md",
+  "sha256": "6ef2413aa4bdcb87294851c92a280728a1fa1584dcfe8f019a14da6cd089564f",
+  "generated_at": "2026-07-08T21:43:57.500Z",
+  "readme": "README.md",
+  "sections": {
+    "readme": {
+      "title": "README",
+      "path": "sections/readme.md"
+    },
+    "contents": {
+      "title": "Contents",
+      "path": "sections/contents.md"
+    },
+    "install": {
+      "title": "Install",
+      "path": "sections/install.md"
+    },
+    "before-you-start": {
+      "title": "Before you start",
+      "path": "sections/before-you-start.md"
+    },
+    "quick-start-card-payment": {
+      "title": "Quick start: card payment",
+      "path": "sections/quick-start-card-payment.md"
+    },
+    "configuration": {
+      "title": "Configuration",
+      "path": "sections/configuration.md"
+    },
+    "core-concepts": {
+      "title": "Core concepts",
+      "path": "sections/core-concepts.md"
+    },
+    "payment-flows": {
+      "title": "Payment flows",
+      "path": "sections/payment-flows.md"
+    },
+    "api-reference": {
+      "title": "API reference",
+      "path": "sections/api-reference.md"
+    },
+    "types": {
+      "title": "Types",
+      "path": "sections/types.md"
+    },
+    "errors": {
+      "title": "Errors",
+      "path": "sections/errors.md"
+    },
+    "payment-statuses": {
+      "title": "Payment statuses",
+      "path": "sections/payment-statuses.md"
+    },
+    "webhooks": {
+      "title": "Webhooks",
+      "path": "sections/webhooks.md"
+    },
+    "cdn-build": {
+      "title": "CDN build",
+      "path": "sections/cdn-build.md"
+    }
+  }
+}
