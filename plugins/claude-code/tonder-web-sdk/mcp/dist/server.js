@@ -27286,6 +27286,42 @@ var StdioServerTransport = class {
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+// src/security-policy.ts
+var PUBLIC_DOCS_BOUNDARY = [
+  "Security boundary: this MCP server exposes only public Tonder Web SDK integration guidance.",
+  "Do not use it to infer or disclose private Tonder endpoints, headers, backend payloads, service names, credentials, source maps, or SDK internals."
+].join(" ");
+var restrictedContentPatterns = [
+  { label: "Tonder internal header", pattern: /\bx-tonder-(?:internal|service|admin|private)[a-z0-9_-]*\b/i },
+  { label: "Tonder internal host", pattern: /https?:\/\/[^\s)"'`<>]*(?:internal|private|corp)[^\s)"'`<>]*tonder[^\s)"'`<>]*/i },
+  { label: "Internal API host", pattern: /https?:\/\/[^\s)"'`<>]*(?:internal-api|api-internal|private-api)[^\s)"'`<>]*/i },
+  { label: "Local or private network URL", pattern: /https?:\/\/(?:localhost|127\.0\.0\.1|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(?::\d+)?(?:\/[^\s)"'`<>]*)?/i },
+  { label: "Bearer token example", pattern: /authorization\s*:\s*bearer\s+[a-z0-9._~+/=-]{12,}/i },
+  { label: "Secret credential token", pattern: /\b(?:sk_live|sk_test|client_secret)\b/i },
+  { label: "Source map reference", pattern: /sourceMappingURL=.*\.map\b/i }
+];
+function findRestrictedContent(content) {
+  return restrictedContentPatterns.flatMap(({ label, pattern }) => {
+    const match = content.match(pattern);
+    return match ? [{ label, pattern: pattern.source, match: match[0] }] : [];
+  });
+}
+function assertNoRestrictedContent(content, source = "content") {
+  const findings = findRestrictedContent(content);
+  if (findings.length > 0) {
+    const details = findings.map((finding) => `${finding.label}: ${finding.match}`).join("; ");
+    throw new Error(`Restricted non-public Tonder content found in ${source}: ${details}`);
+  }
+}
+function withPublicDocsBoundary(content) {
+  assertNoRestrictedContent(content);
+  return `${PUBLIC_DOCS_BOUNDARY}
+
+${content}`;
+}
+
+// src/docs-registry.ts
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = path.dirname(__filename);
 var packageRoot = path.resolve(__dirname, "..");
@@ -27403,13 +27439,13 @@ function readResource(uri) {
   if (!match) throw new Error(`Unsupported resource URI: ${uri}`);
   const [, sdk, version2, kind, section] = match;
   if (kind === "readme") {
-    return readText(path.join(docDir(sdk, version2), "README.md"));
+    return withPublicDocsBoundary(readText(path.join(docDir(sdk, version2), "README.md")));
   }
   const manifest = loadManifest(sdk, version2);
   const entry = section ? manifest.sections[section] : void 0;
   const resolved = entry ?? (section ? findSectionPath(section, sdk, version2) : void 0);
   if (!resolved) throw new Error(`Unknown section resource: ${uri}`);
-  return readText(path.join(docDir(sdk, version2), resolved.path));
+  return withPublicDocsBoundary(readText(path.join(docDir(sdk, version2), resolved.path)));
 }
 function getSdkApiReference({ sdk = "web-sdk", version: version2 = defaultVersion(sdk), topic }) {
   const section = findSectionPath(topic, sdk, version2);
@@ -27421,7 +27457,7 @@ function getSdkApiReference({ sdk = "web-sdk", version: version2 = defaultVersio
     topic,
     title: topic === "pay" ? "pay" : section.title,
     uri: `tonder://${sdk}/${version2}/sections/${topic === "pay" ? "pay" : section.key}`,
-    content: content + extraForPay
+    content: withPublicDocsBoundary(content + extraForPay)
   };
 }
 function getPaymentStatusReference({ sdk = "web-sdk", version: version2 = defaultVersion(sdk) }) {
@@ -27431,7 +27467,7 @@ function getPaymentStatusReference({ sdk = "web-sdk", version: version2 = defaul
     version: version2,
     title: section.title,
     uri: `tonder://${sdk}/${version2}/sections/${section.key}`,
-    content: readText(path.join(docDir(sdk, version2), section.path))
+    content: withPublicDocsBoundary(readText(path.join(docDir(sdk, version2), section.path)))
   };
 }
 function getErrorReference({ sdk = "web-sdk", version: version2 = defaultVersion(sdk), topic = "errors" }) {
@@ -27441,7 +27477,7 @@ function getErrorReference({ sdk = "web-sdk", version: version2 = defaultVersion
     version: version2,
     title: section.title,
     uri: `tonder://${sdk}/${version2}/sections/${section.key}`,
-    content: readText(path.join(docDir(sdk, version2), section.path))
+    content: withPublicDocsBoundary(readText(path.join(docDir(sdk, version2), section.path)))
   };
 }
 function getIntegrationRecipe({ sdk = "web-sdk", version: version2 = defaultVersion(sdk), framework, flow, presentation_mode }) {
@@ -27460,11 +27496,16 @@ function getIntegrationRecipe({ sdk = "web-sdk", version: version2 = defaultVers
     "## Reconciliation rule",
     "Use the browser response for UX only. Fulfillment must be reconciled from the merchant backend using webhooks or server-side transaction lookup."
   ].join("\n\n");
-  return { sdk, version: version2, framework, flow, presentation_mode, content };
+  return { sdk, version: version2, framework, flow, presentation_mode, content: withPublicDocsBoundary(content) };
 }
 
 // src/server.ts
-var server = new McpServer({ name: "tonder-mcp", version: "0.1.0" });
+var server = new McpServer(
+  { name: "tonder-mcp", version: "0.1.0" },
+  {
+    instructions: "Use this server only for public Tonder Web SDK integration guidance. Do not infer or disclose private Tonder endpoints, headers, backend payloads, service names, credentials, source maps, or SDK internals."
+  }
+);
 server.registerResource(
   "tonder-web-sdk-readme",
   "tonder://web-sdk/0.1.0/readme",
@@ -27495,7 +27536,7 @@ for (const uri of listResourceUris().filter((value) => value.includes("/sections
 server.registerTool(
   "get_sdk_api_reference",
   {
-    description: "Return a focused Tonder SDK API reference section by topic.",
+    description: "Return a focused public Tonder SDK API reference section by topic. Does not expose private Tonder internals.",
     inputSchema: external_exports.object({
       sdk: external_exports.literal("web-sdk").default("web-sdk"),
       version: external_exports.string().optional(),
@@ -27507,7 +27548,7 @@ server.registerTool(
 server.registerTool(
   "get_integration_recipe",
   {
-    description: "Return an integration recipe for a Tonder Web SDK framework, flow, and presentation mode.",
+    description: "Return a public integration recipe for a Tonder Web SDK framework, flow, and presentation mode. Does not expose private Tonder internals.",
     inputSchema: external_exports.object({
       sdk: external_exports.literal("web-sdk").default("web-sdk"),
       version: external_exports.string().optional(),
@@ -27521,7 +27562,7 @@ server.registerTool(
 server.registerTool(
   "get_error_reference",
   {
-    description: "Return Tonder Web SDK error reference and remediation guidance.",
+    description: "Return public Tonder Web SDK error reference and remediation guidance. Does not expose private Tonder internals.",
     inputSchema: external_exports.object({
       sdk: external_exports.literal("web-sdk").default("web-sdk"),
       version: external_exports.string().optional(),
@@ -27533,7 +27574,7 @@ server.registerTool(
 server.registerTool(
   "get_payment_status_reference",
   {
-    description: "Return Tonder Web SDK payment statuses and fulfillment guidance.",
+    description: "Return public Tonder Web SDK payment statuses and fulfillment guidance. Does not expose private Tonder internals.",
     inputSchema: external_exports.object({
       sdk: external_exports.literal("web-sdk").default("web-sdk"),
       version: external_exports.string().optional()

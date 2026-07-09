@@ -7,9 +7,21 @@ description: Use when integrating the Tonder Web SDK into a merchant web project
 
 Integrate the Tonder Web SDK into the user's project using the public SDK contract and the smallest safe implementation for the selected framework and payment flow.
 
+
+## Security boundary
+
+This plugin is for public SDK integration guidance only. It must never be used to inspect, infer, or expose Tonder private implementation details.
+
+- Use only the public SDK contract returned by the bundled `tonder-docs` MCP server.
+- Do not reverse engineer the Tonder SDK, installed packages, minified bundles, source maps, network traffic, or runtime behavior to discover implementation details.
+- Do not expose or invent internal Tonder endpoints, backend service names, request bodies, headers, authentication schemes, infrastructure details, incident details, or non-public API behavior.
+- Do not search local or sibling repositories for Tonder SDK internals, even if they exist on the user's machine.
+- If the user asks how Tonder works internally, explain that the plugin only provides public integration contracts and merchant-facing guidance.
+- If a required integration detail is missing from `tonder-docs`, stop and report the documentation gap instead of guessing or inspecting internals.
+
 ## Source of truth
 
-Use the bundled `tonder-docs` MCP server as the only documentation source for implementation details.
+Use the bundled `tonder-docs` MCP server as the only documentation source for public integration details.
 
 Before editing, call the MCP tools needed for the selected work:
 
@@ -18,7 +30,7 @@ Before editing, call the MCP tools needed for the selected work:
 - `get_error_reference` when adding error handling or explaining SDK errors.
 - `get_payment_status_reference` when handling or explaining payment statuses.
 
-If `tonder-docs` MCP is unavailable or does not return the required information, stop and report the blocker. Do not use local copies of SDK docs, sibling repos, or improvised examples as a fallback.
+If `tonder-docs` MCP is unavailable or does not return the required information, stop and report the blocker. Do not use local copies of SDK docs, sibling repos, SDK package inspection, browser network traces, source maps, or improvised examples as a fallback.
 
 ## Workflow
 
@@ -80,8 +92,10 @@ If `tonder-docs` MCP is unavailable or does not return the required information,
 - Always include `idempotency_key` in payment calls, with a short code comment explaining that it should be stable per checkout attempt so retries do not create duplicate charges. Do not reuse `client_reference` as the idempotency key.
 - Do not add SDK customization, presentation callbacks, metadata, card-field event callbacks, or custom container IDs unless the user requests them or the existing project clearly requires them. When metadata is relevant, keep it non-sensitive and prefer reporting-friendly keys such as `customer_email`, `customer_id`, `business_user`, or `operation_date`.
 - Do not store API keys, secure tokens, customer data, or card data in generated files beyond placeholder/demo values.
-- Do not search parent/sibling folders for `tonder-js`, local SDK packages, or monorepo workspaces. The developer project is the only editable project.
+- Do not search parent/sibling folders for `tonder-js`, local SDK packages, source maps, built SDK bundles, internal API clients, or monorepo workspaces. The developer project is the only editable project.
 - Do not install `file:../tonder-js`, `link:`, or sibling workspace packages. If npm is unavailable, use the documented CDN integration instead.
+- Do not inspect `node_modules`, browser bundles, source maps, runtime network traffic, or installed Tonder SDK package code to infer private Tonder behavior.
+- Do not expose or invent internal Tonder API endpoints, headers, backend request/response bodies, service names, or infrastructure details.
 - When CDN is selected, do not import runtime code from `@tonder.io/web-sdk`; use `window.Tonder` at runtime. If TypeScript types are requested, install `@tonder.io/web-sdk` only as a devDependency and use `import type`, or add a minimal ambient declaration.
 - Do not edit code until all missing required decisions are answered: target page/component, flow, presentation mode when applicable, and SDK loading strategy when applicable. Ask one question at a time, and include a one-sentence explanation of what the decision means and how it changes the integration.
 - Do not call MCP recipes using guessed required values. For hosted-auth flows, `presentation_mode` must be user-provided before calling `get_integration_recipe`.

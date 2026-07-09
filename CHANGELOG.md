@@ -2,6 +2,14 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.9 - 2026-07-09
+
+### Security
+
+- Added public-documentation security boundaries to the Tonder Web SDK skill and MCP tool responses.
+- Added restricted-content tests to block obvious private endpoints, internal headers, bearer-token examples, source maps, and private-network URLs from bundled docs.
+- Documented the AI plugin release hardening checklist for maintainers.
+
 ## 0.1.8 - 2026-07-08
 
 ### Fixed

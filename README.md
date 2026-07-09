@@ -197,7 +197,7 @@ After a release is public, do not move or rewrite its tag. Publish a new patch v
 
 Generated integrations must not collect raw card data in merchant-owned inputs. Use Tonder SDK-rendered secure fields or the current Tonder-approved equivalent.
 
-See [`SECURITY.md`](SECURITY.md) for vulnerability reporting and security scope.
+See [`SECURITY.md`](SECURITY.md) for vulnerability reporting, public-documentation boundaries, and the release hardening checklist. The plugin is intentionally docs-only: it must not expose private Tonder endpoints, headers, backend payloads, credentials, SDK internals, or undocumented API behavior.
 
 ## License
 

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { withPublicDocsBoundary } from './security-policy.js';
 
 export type Sdk = 'web-sdk';
 export type Framework = 'html' | 'react' | 'angular';
@@ -164,13 +165,13 @@ export function readResource(uri: string) {
   if (!match) throw new Error(`Unsupported resource URI: ${uri}`);
   const [, sdk, version, kind, section] = match as [string, Sdk, string, string, string | undefined];
   if (kind === 'readme') {
-    return readText(path.join(docDir(sdk, version), 'README.md'));
+    return withPublicDocsBoundary(readText(path.join(docDir(sdk, version), 'README.md')));
   }
   const manifest = loadManifest(sdk, version);
   const entry = section ? manifest.sections[section] : undefined;
   const resolved = entry ?? (section ? findSectionPath(section, sdk, version) : undefined);
   if (!resolved) throw new Error(`Unknown section resource: ${uri}`);
-  return readText(path.join(docDir(sdk, version), resolved.path));
+  return withPublicDocsBoundary(readText(path.join(docDir(sdk, version), resolved.path)));
 }
 
 export function getSdkApiReference({ sdk = 'web-sdk', version = defaultVersion(sdk), topic }: ReferenceRequest) {
@@ -183,7 +184,7 @@ export function getSdkApiReference({ sdk = 'web-sdk', version = defaultVersion(s
     topic,
     title: topic === 'pay' ? 'pay' : section.title,
     uri: `tonder://${sdk}/${version}/sections/${topic === 'pay' ? 'pay' : section.key}`,
-    content: content + extraForPay,
+    content: withPublicDocsBoundary(content + extraForPay),
   };
 }
 
@@ -194,7 +195,7 @@ export function getPaymentStatusReference({ sdk = 'web-sdk', version = defaultVe
     version,
     title: section.title,
     uri: `tonder://${sdk}/${version}/sections/${section.key}`,
-    content: readText(path.join(docDir(sdk, version), section.path)),
+    content: withPublicDocsBoundary(readText(path.join(docDir(sdk, version), section.path))),
   };
 }
 
@@ -205,7 +206,7 @@ export function getErrorReference({ sdk = 'web-sdk', version = defaultVersion(sd
     version,
     title: section.title,
     uri: `tonder://${sdk}/${version}/sections/${section.key}`,
-    content: readText(path.join(docDir(sdk, version), section.path)),
+    content: withPublicDocsBoundary(readText(path.join(docDir(sdk, version), section.path))),
   };
 }
 
@@ -225,5 +226,5 @@ export function getIntegrationRecipe({ sdk = 'web-sdk', version = defaultVersion
     '## Reconciliation rule',
     'Use the browser response for UX only. Fulfillment must be reconciled from the merchant backend using webhooks or server-side transaction lookup.',
   ].join('\n\n');
-  return { sdk, version, framework, flow, presentation_mode, content };
+  return { sdk, version, framework, flow, presentation_mode, content: withPublicDocsBoundary(content) };
 }

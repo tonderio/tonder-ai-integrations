@@ -48,7 +48,7 @@ If the package metadata or README URL is unavailable, the sync command fails so 
 
 ## Boundaries
 
-This MCP server does not process payments, store credentials, or access merchant customer data.
+This MCP server does not process payments, store credentials, access merchant customer data, inspect SDK internals, or call Tonder APIs. It only returns bundled public documentation snapshots and maintained public recipes. Do not add private endpoints, internal headers, backend payloads, source maps, credentials, or undocumented API behavior to this package.
 
 ## GitHub README sync note
 

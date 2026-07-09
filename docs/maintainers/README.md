@@ -248,6 +248,16 @@ Document all supported user paths separately:
 
 Keep usage examples in both command-style and natural-language style because different hosts expose skills differently.
 
+
+### Security hardening gate
+
+Before publishing, run the standard validation suite and treat the restricted-content test as a release blocker. The plugin is public, so all generated snapshots and bundle copies must stay merchant-facing:
+
+- use only the public Web SDK GitHub README/package as the docs source;
+- do not copy internal runbooks, source maps, backend payloads, private endpoint names, or incident details into recipes;
+- if a merchant-facing detail is missing, update the public SDK README first, merge it, then run `npm run sync:docs`;
+- never bypass the scan by weakening forbidden patterns without reviewing the docs diff.
+
 ## Internal-only notes
 
 Do not put credentials, private customer examples, unreleased API behavior, or internal incident details in this public repository. Keep that information in Tonder's internal knowledge base and link to it from internal systems, not from public docs.

@@ -1,5 +1,20 @@
+import { readFileSync, readdirSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { getIntegrationRecipe, getPaymentStatusReference, getSdkApiReference, listResourceUris } from '../docs-registry.js';
+import { PUBLIC_DOCS_BOUNDARY, findRestrictedContent } from '../security-policy.js';
+
+
+function listMarkdownFiles(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return listMarkdownFiles(fullPath);
+    return entry.isFile() && entry.name.endsWith('.md') ? [fullPath] : [];
+  });
+}
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('docs registry', () => {
   it('lists versioned web sdk resources', () => {
@@ -27,6 +42,21 @@ describe('docs registry', () => {
     expect(resources).toContain(`tonder://web-sdk/${recipe.version}/readme`);
     expect(recipe.content).toContain('card_fields');
     expect(recipe.content).toContain('payment_method');
+  });
+
+
+  it('includes the public docs security boundary in tool output', () => {
+    const reference = getSdkApiReference({ sdk: 'web-sdk', topic: 'pay' });
+    expect(reference.content).toContain(PUBLIC_DOCS_BOUNDARY);
+  });
+
+  it('does not ship restricted private Tonder content in bundled docs', () => {
+    const docsRoot = path.resolve(__dirname, '../../docs/web-sdk');
+    const findings = listMarkdownFiles(docsRoot).flatMap((filePath) =>
+      findRestrictedContent(readFileSync(filePath, 'utf8')).map((finding) => ({ filePath, ...finding }))
+    );
+
+    expect(findings).toEqual([]);
   });
 
   it('returns payment status reference', () => {

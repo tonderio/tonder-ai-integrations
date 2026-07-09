@@ -11,7 +11,13 @@ import {
   readResource,
 } from './docs-registry.js';
 
-const server = new McpServer({ name: 'tonder-mcp', version: '0.1.0' });
+const server = new McpServer(
+  { name: 'tonder-mcp', version: '0.1.0' },
+  {
+    instructions:
+      'Use this server only for public Tonder Web SDK integration guidance. Do not infer or disclose private Tonder endpoints, headers, backend payloads, service names, credentials, source maps, or SDK internals.',
+  }
+);
 
 server.registerResource(
   'tonder-web-sdk-readme',
@@ -45,7 +51,7 @@ for (const uri of listResourceUris().filter((value) => value.includes('/sections
 server.registerTool(
   'get_sdk_api_reference',
   {
-    description: 'Return a focused Tonder SDK API reference section by topic.',
+    description: 'Return a focused public Tonder SDK API reference section by topic. Does not expose private Tonder internals.',
     inputSchema: z.object({
       sdk: z.literal('web-sdk').default('web-sdk'),
       version: z.string().optional(),
@@ -58,7 +64,7 @@ server.registerTool(
 server.registerTool(
   'get_integration_recipe',
   {
-    description: 'Return an integration recipe for a Tonder Web SDK framework, flow, and presentation mode.',
+    description: 'Return a public integration recipe for a Tonder Web SDK framework, flow, and presentation mode. Does not expose private Tonder internals.',
     inputSchema: z.object({
       sdk: z.literal('web-sdk').default('web-sdk'),
       version: z.string().optional(),
@@ -73,7 +79,7 @@ server.registerTool(
 server.registerTool(
   'get_error_reference',
   {
-    description: 'Return Tonder Web SDK error reference and remediation guidance.',
+    description: 'Return public Tonder Web SDK error reference and remediation guidance. Does not expose private Tonder internals.',
     inputSchema: z.object({
       sdk: z.literal('web-sdk').default('web-sdk'),
       version: z.string().optional(),
@@ -86,7 +92,7 @@ server.registerTool(
 server.registerTool(
   'get_payment_status_reference',
   {
-    description: 'Return Tonder Web SDK payment statuses and fulfillment guidance.',
+    description: 'Return public Tonder Web SDK payment statuses and fulfillment guidance. Does not expose private Tonder internals.',
     inputSchema: z.object({
       sdk: z.literal('web-sdk').default('web-sdk'),
       version: z.string().optional(),
