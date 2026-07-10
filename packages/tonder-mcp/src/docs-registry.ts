@@ -210,15 +210,20 @@ export function getErrorReference({ sdk = 'web-sdk', version = defaultVersion(sd
   };
 }
 
+function getLifecycleRecipeText(version: string, framework: Framework) {
+  const genericLifecycle = getRecipeText(version, 'lifecycle.md');
+  const frameworkLifecycle = getRecipeText(version, `lifecycle-${framework}.md`);
+  return [genericLifecycle, frameworkLifecycle].filter(Boolean).join('\n');
+}
+
 export function getIntegrationRecipe({ sdk = 'web-sdk', version = defaultVersion(sdk), framework, flow, presentation_mode }: RecipeRequest) {
   const frameworkContent = getRecipeText(version, `${framework}.md`);
   const flowContent = getRecipeText(version, 'flows.md') || getSdkApiReference({ sdk, version, topic: flow }).content;
-  const lifecycleSection = getSdkApiReference({ sdk, version, topic: 'init' });
   const content = [
     `# Tonder ${sdk} recipe: ${framework} + ${flow}`,
     `Presentation mode: ${presentation_mode}`,
     '## Lifecycle',
-    lifecycleSection.content,
+    getLifecycleRecipeText(version, framework),
     '## Framework pattern',
     frameworkContent,
     '## Flow details',

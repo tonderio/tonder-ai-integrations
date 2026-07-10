@@ -2,6 +2,14 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.11 - 2026-07-10
+
+### Fixed
+
+- Synced Web SDK README examples that use public browser configuration for Tonder public API key and SDK environment.
+- Prevented `get_integration_recipe` from embedding hardcoded API reference examples in the recipe lifecycle section.
+- Added regression coverage so recipes do not reintroduce hardcoded public API key or secure-token examples.
+
 ## 0.1.10 - 2026-07-10
 
 ### Changed

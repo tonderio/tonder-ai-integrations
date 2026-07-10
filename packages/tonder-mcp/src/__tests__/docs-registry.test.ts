@@ -55,6 +55,16 @@ describe('docs registry', () => {
 
 
 
+
+  it('does not leak hardcoded API reference examples into integration recipes', () => {
+    const recipe = getIntegrationRecipe({ sdk: 'web-sdk', framework: 'react', flow: 'card_payment', presentation_mode: 'embedded' });
+
+    expect(recipe.content).not.toContain("api_key: 'pk_test_...'");
+    expect(recipe.content).not.toContain("secure_token: 'server_minted_secure_token'");
+    expect(recipe.content).toContain('import.meta.env.VITE_TONDER_PUBLIC_API_KEY');
+    expect(recipe.content).toContain('process.env.NEXT_PUBLIC_TONDER_PUBLIC_API_KEY');
+  });
+
   it('guides public SDK configuration through framework config instead of hardcoded keys', () => {
     const recipeDir = path.join(latestWebSdkDocsDir(), 'recipes');
     const html = readFileSync(path.join(recipeDir, 'html.md'), 'utf8');

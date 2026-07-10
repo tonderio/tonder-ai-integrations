@@ -1,0 +1,77 @@
+{
+  "sdk": "web-sdk",
+  "version": "0.1.4",
+  "package_name": "@tonder.io/web-sdk",
+  "package_json_url": "https://raw.githubusercontent.com/tonderio/web-sdk/main/package.json",
+  "source": "https://raw.githubusercontent.com/tonderio/web-sdk/main/README.md",
+  "source_url": "https://raw.githubusercontent.com/tonderio/web-sdk/main/README.md",
+  "sha256": "8db22c740eb99f0a5069d3441c9af1ade9abe7db95145103e4cf97a253e8dd3c",
+  "generated_at": "2026-07-10T17:23:44.242Z",
+  "readme": "README.md",
+  "sections": {
+    "readme": {
+      "title": "README",
+      "path": "sections/readme.md"
+    },
+    "contents": {
+      "title": "Contents",
+      "path": "sections/contents.md"
+    },
+    "install": {
+      "title": "Install",
+      "path": "sections/install.md"
+    },
+    "before-you-start": {
+      "title": "Before you start",
+      "path": "sections/before-you-start.md"
+    },
+    "public-browser-configuration": {
+      "title": "Public browser configuration",
+      "path": "sections/public-browser-configuration.md"
+    },
+    "backend-secure-token-endpoint": {
+      "title": "Backend secure token endpoint",
+      "path": "sections/backend-secure-token-endpoint.md"
+    },
+    "quick-start-card-payment": {
+      "title": "Quick start: card payment",
+      "path": "sections/quick-start-card-payment.md"
+    },
+    "configuration": {
+      "title": "Configuration",
+      "path": "sections/configuration.md"
+    },
+    "core-concepts": {
+      "title": "Core concepts",
+      "path": "sections/core-concepts.md"
+    },
+    "payment-flows": {
+      "title": "Payment flows",
+      "path": "sections/payment-flows.md"
+    },
+    "api-reference": {
+      "title": "API reference",
+      "path": "sections/api-reference.md"
+    },
+    "types": {
+      "title": "Types",
+      "path": "sections/types.md"
+    },
+    "errors": {
+      "title": "Errors",
+      "path": "sections/errors.md"
+    },
+    "payment-statuses": {
+      "title": "Payment statuses",
+      "path": "sections/payment-statuses.md"
+    },
+    "webhooks": {
+      "title": "Webhooks",
+      "path": "sections/webhooks.md"
+    },
+    "cdn-build": {
+      "title": "CDN build",
+      "path": "sections/cdn-build.md"
+    }
+  }
+}

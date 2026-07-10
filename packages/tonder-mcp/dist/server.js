@@ -27480,15 +27480,19 @@ function getErrorReference({ sdk = "web-sdk", version: version2 = defaultVersion
     content: withPublicDocsBoundary(readText(path.join(docDir(sdk, version2), section.path)))
   };
 }
+function getLifecycleRecipeText(version2, framework) {
+  const genericLifecycle = getRecipeText(version2, "lifecycle.md");
+  const frameworkLifecycle = getRecipeText(version2, `lifecycle-${framework}.md`);
+  return [genericLifecycle, frameworkLifecycle].filter(Boolean).join("\n");
+}
 function getIntegrationRecipe({ sdk = "web-sdk", version: version2 = defaultVersion(sdk), framework, flow, presentation_mode }) {
   const frameworkContent = getRecipeText(version2, `${framework}.md`);
   const flowContent = getRecipeText(version2, "flows.md") || getSdkApiReference({ sdk, version: version2, topic: flow }).content;
-  const lifecycleSection = getSdkApiReference({ sdk, version: version2, topic: "init" });
   const content = [
     `# Tonder ${sdk} recipe: ${framework} + ${flow}`,
     `Presentation mode: ${presentation_mode}`,
     "## Lifecycle",
-    lifecycleSection.content,
+    getLifecycleRecipeText(version2, framework),
     "## Framework pattern",
     frameworkContent,
     "## Flow details",

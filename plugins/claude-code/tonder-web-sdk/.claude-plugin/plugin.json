@@ -1,6 +1,6 @@
 {
   "name": "tonder-web-sdk",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Integrate the Tonder Web SDK into browser-based web apps.",
   "author": {
     "name": "Tonder",
