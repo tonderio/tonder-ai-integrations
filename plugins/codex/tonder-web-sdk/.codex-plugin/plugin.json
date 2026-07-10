@@ -1,6 +1,6 @@
 {
   "name": "tonder-web-sdk",
-  "version": "0.1.9+codex.20260709090700",
+  "version": "0.1.10+codex.20260710105000",
   "description": "Integrate the Tonder Web SDK into browser-based web apps.",
   "skills": "./skills/",
   "author": {

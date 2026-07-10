@@ -2,6 +2,20 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.10 - 2026-07-10
+
+### Changed
+
+- Synced bundled Web SDK documentation to `0.1.3`.
+- Updated integration recipes to read Tonder public API key and SDK environment from each framework's public configuration layer instead of hardcoding merchant values.
+- Clarified that `currency` is merchant checkout/business data and should not be forced into environment variables.
+- Updated final-response guidance to always remind merchants that Card on File, saved cards, list/remove cards, and enrollment require a backend-generated `secure_token`.
+
+### Tests
+
+- Added coverage to prevent hardcoded public API key examples from returning to maintained recipes.
+- Added coverage for secure-token and Card-on-File guidance in the latest recipes.
+
 ## 0.1.9 - 2026-07-09
 
 ### Security

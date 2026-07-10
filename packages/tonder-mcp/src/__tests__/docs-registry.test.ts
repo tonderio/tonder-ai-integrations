@@ -16,6 +16,15 @@ function listMarkdownFiles(directory: string): string[] {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+function latestWebSdkDocsDir() {
+  const docsRoot = path.resolve(__dirname, '../../docs/web-sdk');
+  const versions = readdirSync(docsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort((left, right) => right.localeCompare(left, undefined, { numeric: true }));
+  return path.join(docsRoot, versions[0]);
+}
+
 describe('docs registry', () => {
   it('lists versioned web sdk resources', () => {
     const resources = listResourceUris();
@@ -44,6 +53,33 @@ describe('docs registry', () => {
     expect(recipe.content).toContain('payment_method');
   });
 
+
+
+  it('guides public SDK configuration through framework config instead of hardcoded keys', () => {
+    const recipeDir = path.join(latestWebSdkDocsDir(), 'recipes');
+    const html = readFileSync(path.join(recipeDir, 'html.md'), 'utf8');
+    const react = readFileSync(path.join(recipeDir, 'react.md'), 'utf8');
+    const angular = readFileSync(path.join(recipeDir, 'angular.md'), 'utf8');
+
+    for (const content of [html, react, angular]) {
+      expect(content).not.toContain("api_key: 'pk_test_...'");
+    }
+
+    expect(html).toContain('window.__TONDER_CONFIG__');
+    expect(react).toContain('import.meta.env.VITE_TONDER_PUBLIC_API_KEY');
+    expect(react).toContain('process.env.NEXT_PUBLIC_TONDER_PUBLIC_API_KEY');
+    expect(angular).toContain('environment.tonderPublicApiKey');
+  });
+
+  it('keeps secure token and COF guidance visible in latest recipes', () => {
+    const flows = readFileSync(path.join(latestWebSdkDocsDir(), 'recipes/flows.md'), 'utf8');
+    const checklist = readFileSync(path.join(latestWebSdkDocsDir(), 'recipes/validation-checklist.md'), 'utf8');
+
+    expect(flows).toContain('Secure token and COF reminder');
+    expect(flows).toContain('session.secure_token');
+    expect(flows).toContain('Card on File');
+    expect(checklist).toContain('saved-card, list-card, remove-card, enrollment, or Card-on-File');
+  });
 
   it('includes the public docs security boundary in tool output', () => {
     const reference = getSdkApiReference({ sdk: 'web-sdk', topic: 'pay' });
