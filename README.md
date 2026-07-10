@@ -29,6 +29,20 @@ Supported flows:
 - Payment methods
 - SafetyPay banks
 
+## Runtime requirement
+
+The bundled `tonder-docs` MCP server is a local `stdio` process. Claude Code and Codex start it with `node`, so users need **Node.js 20+ available in their PATH** for the MCP runtime to start.
+
+This does not mean the plugin calls a Tonder backend API. `tonder-docs` only reads the public documentation snapshots packaged with the plugin.
+
+Quick check:
+
+```bash
+node --version
+```
+
+If the MCP server does not appear in a new Claude/Codex session, first verify Node.js 20+ is installed and visible from the same shell/app environment that launches the agent.
+
 ## Install in Claude Code CLI
 
 Install from the Tonder GitHub marketplace:

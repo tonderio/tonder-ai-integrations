@@ -80,6 +80,16 @@ The sync script packages the source skill and the local `tonder-docs` MCP runtim
 
 The plugin MCP runtime must remain self-contained for GitHub marketplace installs. Do not rely on `node_modules` being present in installed plugins. `packages/tonder-mcp` builds a bundled `dist/server.js`, and that `mcp/dist/server.js` file must be committed inside each plugin package.
 
+### Runtime dependency
+
+The Claude/Codex plugin config starts `tonder-docs` with `command: "node"`, so installed users need Node.js 20+ available in PATH. This is consistent with common local MCP distribution patterns (`node`/`npx`), but it must stay documented because installing Claude/Codex does not guarantee Node is installed or visible to the app environment.
+
+Before release, keep this distinction clear in public docs:
+
+- `tonder-docs` is a local `stdio` MCP documentation server.
+- It does not call Tonder backend APIs or process payments.
+- It requires Node.js 20+ only to execute the bundled local MCP process.
+
 ## Local testing before merge
 
 Test the feature branch before merging to `main`. Public users install from the repository marketplace URL; local test installs are only for maintainers.

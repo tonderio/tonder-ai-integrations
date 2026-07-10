@@ -2,6 +2,16 @@
 
 Local MCP server for Tonder SDK documentation, integration recipes, errors, and payment statuses.
 
+## Runtime requirement
+
+This package runs as a local `stdio` MCP server and requires **Node.js 20+**. Plugin hosts start it with `node` and communicate through standard input/output; it does not open an HTTP port.
+
+Check the runtime with:
+
+```bash
+node --version
+```
+
 ## Usage
 
 ```bash
