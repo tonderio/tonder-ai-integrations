@@ -1,0 +1,1 @@
+For React, read the Tonder public API key and SDK environment from the app public config layer. Use `import.meta.env.VITE_*` in Vite/React. For Next.js Client Components, use `process.env.NEXT_PUBLIC_*`.

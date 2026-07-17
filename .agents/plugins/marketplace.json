@@ -10,7 +10,7 @@
         "source": "git-subdir",
         "url": "https://github.com/tonderio/tonder-ai-integrations.git",
         "path": "./plugins/codex/tonder-web-sdk",
-        "ref": "tonder-web-sdk--v0.1.11"
+        "ref": "tonder-web-sdk--v0.1.12"
       },
       "policy": {
         "installation": "AVAILABLE",

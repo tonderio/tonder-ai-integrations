@@ -2,6 +2,13 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.12 - 2026-07-17
+
+### Changed
+
+- Synced bundled Web SDK documentation to `0.1.5`.
+- Bundled the latest Web SDK README snapshot and maintained integration recipes for Claude and Codex plugins.
+
 ## 0.1.11 - 2026-07-10
 
 ### Fixed
