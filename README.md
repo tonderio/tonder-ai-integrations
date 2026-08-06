@@ -105,6 +105,34 @@ Install from the Tonder GitHub marketplace in Codex Desktop:
 6. Install **Tonder Web SDK** from **Tonder AI Integrations**.
 7. Start a new Codex thread after installation.
 
+## Update an installed plugin
+
+Both hosts read the plugin through a local copy of this repository's marketplace, so an update is two steps: refresh that copy, then take the new plugin from it. Doing only the second finds nothing new.
+
+Claude Code CLI:
+
+```bash
+claude plugin marketplace update tonder-ai-integrations
+claude plugin update tonder-web-sdk
+```
+
+Restart Claude Code afterwards — the update applies on the next start.
+
+Codex CLI:
+
+```bash
+codex plugin marketplace upgrade
+codex plugin add tonder-web-sdk@tonder-ai-integrations
+```
+
+Start a new Codex thread afterwards.
+
+In the desktop apps, the same refresh lives in the plugin or marketplace settings; re-adding the marketplace has the same effect.
+
+To check what you have, `claude plugin list` or `codex plugin list`. Compare against the version in [`CHANGELOG.md`](CHANGELOG.md).
+
+The bundled Web SDK documentation travels inside the plugin, so updating the plugin is what brings newer SDK docs. Nothing fetches them at runtime.
+
 ## Usage examples
 
 You can invoke the plugin either by selecting the plugin command/skill or by asking naturally.
