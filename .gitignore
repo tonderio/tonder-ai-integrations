@@ -2,9 +2,7 @@ node_modules/
 dist/
 !packages/tonder-mcp/dist/
 !packages/tonder-mcp/dist/**
-!plugins/claude-code/tonder-web-sdk/mcp/dist/
-!plugins/claude-code/tonder-web-sdk/mcp/dist/**
-!plugins/codex/tonder-web-sdk/mcp/dist/
-!plugins/codex/tonder-web-sdk/mcp/dist/**
+!plugins/*/*/mcp/dist/
+!plugins/*/*/mcp/dist/**
 .env
 .DS_Store

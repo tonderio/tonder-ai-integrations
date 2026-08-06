@@ -159,6 +159,7 @@ The plugin guides the agent to:
 | `plugins/codex/tonder-web-sdk/` | Installable Codex plugin package. |
 | `skills/tonder-web-sdk-integrator/` | Source skill copied into each plugin package. |
 | `packages/tonder-mcp/` | Local stdio MCP docs server bundled into each plugin. |
+| `scripts/` | Sync tooling that regenerates plugin packages and stamps derived versions. |
 | `docs/maintainers/` | Tonder maintainer workflow for sync, validation, and release. |
 | `docs/releases/` | Release notes and verification checklists. |
 
@@ -180,6 +181,8 @@ The day-to-day rule is simple:
 4. Validate and test before merging.
 5. Squash merge to `main`.
 
+Versions follow the same rule. Edit the one source version, then run the sync — never type a version into a generated file.
+
 Quick validation path:
 
 ```bash
@@ -200,9 +203,32 @@ python3 /Users/dave/.codex/skills/.system/plugin-creator/scripts/validate_plugin
 
 For complete branch, local testing, and release instructions, see [`docs/maintainers/README.md`](docs/maintainers/README.md).
 
+## Plugin versions
+
+Each plugin declares its version in exactly one place:
+
+```text
+.claude-plugin/marketplace.json -> plugins[].version
+```
+
+Every other version-bearing field is derived from it by `node scripts/sync-web-sdk-skill.mjs`:
+
+| Derived location | Stamped value |
+| --- | --- |
+| `plugins/claude-code/<plugin>/.claude-plugin/plugin.json` → `version` | the source version |
+| `plugins/codex/<plugin>/.codex-plugin/plugin.json` → `version` | the source version plus a fresh `+codex.<timestamp>` cachebuster |
+| `.agents/plugins/marketplace.json` → `plugins[].source.ref` | `<plugin-name>--v<version>` |
+
+Two things are deliberately **not** derived:
+
+- The top-level `version` in `.claude-plugin/marketplace.json` is the **catalog's** version, not any plugin's. It is independent and bumped by hand when the catalog's shape changes.
+- `CHANGELOG.md` and `docs/releases/<version>.md` are narrative and stay hand-written.
+
+`npm test` in `packages/tonder-mcp` fails if any derived copy drifts from the source, naming the file and the mismatch. That is what catches a hand edit that skipped the sync.
+
 ## Release tags
 
-The release tag, for example `tonder-web-sdk--v0.1.7`, pins an immutable plugin version for marketplaces and users.
+The release tag, for example `tonder-web-sdk--v0.1.13`, pins an immutable plugin version for marketplaces and users.
 
 It matters because:
 

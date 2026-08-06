@@ -2,6 +2,17 @@
 
 All notable changes to this repository are documented here.
 
+## Unreleased
+
+### Changed
+
+- A plugin's version is now written in one place — `plugins[].version` in `.claude-plugin/marketplace.json` — and stamped into the Claude manifest, the Codex manifest, and the Codex marketplace `source.ref` by `scripts/sync-web-sdk-skill.mjs`. Releasing changes one number instead of five.
+- The catalog's own `version` no longer tracks any plugin. It describes the catalog's shape and is bumped when a plugin is added, removed, or renamed.
+
+### Tests
+
+- A drift test fails when any derived version diverges from the catalog, naming the file and the mismatch. It closes a gap `claude plugin tag` cannot see: that check compares the Claude manifest against the catalog only, so a stale Codex `source.ref` used to pass validation and leave Codex users installing the previous release.
+
 ## 0.1.13 - 2026-08-06
 
 ### Added

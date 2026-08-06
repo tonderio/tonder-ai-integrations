@@ -37,9 +37,12 @@ Edit source content here:
 | MCP server source | `packages/tonder-mcp/src/` |
 | MCP documentation snapshot | `packages/tonder-mcp/docs/` |
 | Maintained integration recipes | `packages/tonder-mcp/docs/web-sdk/recipes/` |
+| Plugin version | `.claude-plugin/marketplace.json` → `plugins[].version` |
 | Root marketplace docs | `README.md` |
 
 Do not edit generated skill copies inside plugin packages directly. They are overwritten by the sync script.
+
+The same applies to versions: plugin manifests and the Codex `source.ref` are stamped, not typed. See [Versioning](#versioning).
 
 ### Maintained recipes
 
@@ -105,6 +108,8 @@ The sync script packages the source skill and the local `tonder-docs` MCP runtim
 - `plugins/codex/tonder-web-sdk/`
 - `plugins/claude-code/tonder-web-sdk/`
 
+It then stamps every derived plugin version from `.claude-plugin/marketplace.json`. See [Versioning](#versioning).
+
 The plugin MCP runtime must remain self-contained for GitHub marketplace installs. Do not rely on `node_modules` being present in installed plugins. `packages/tonder-mcp` builds a bundled `dist/server.js`, and that `mcp/dist/server.js` file must be committed inside each plugin package.
 
 ### Runtime dependency
@@ -148,16 +153,48 @@ Do not document local `.plugin` upload as the primary public install path. It is
 
 ## Versioning
 
-Use the same base semantic version for Claude Code and Codex releases.
+Bump one number, then run the sync. Everything else is stamped.
 
-| Surface | Version location |
+```jsonc
+// .claude-plugin/marketplace.json
+"plugins": [
+  { "name": "tonder-web-sdk", "version": "0.1.14", ... }
+]
+```
+
+```bash
+node scripts/sync-web-sdk-skill.mjs
+```
+
+`plugins[].version` in `.claude-plugin/marketplace.json` is the **single source of truth** for a plugin's version. It already lists plugins by name, and it is the field Claude's own release helper validates against, so making it authoritative adds no new file to keep in sync.
+
+### What the sync derives
+
+`scripts/sync-plugin-versions.mjs` runs at the end of `scripts/sync-web-sdk-skill.mjs` and stamps, for every plugin in the catalog:
+
+| Derived location | Stamped value |
 | --- | --- |
-| Claude plugin | `plugins/claude-code/tonder-web-sdk/.claude-plugin/plugin.json` |
-| Claude marketplace | `.claude-plugin/marketplace.json` |
-| Codex plugin | `plugins/codex/tonder-web-sdk/.codex-plugin/plugin.json` |
-| Changelog | `CHANGELOG.md` |
+| `plugins/claude-code/<plugin>/.claude-plugin/plugin.json` → `version` | the source version |
+| `plugins/codex/<plugin>/.codex-plugin/plugin.json` → `version` | the source version plus a fresh `+codex.<timestamp>` cachebuster |
+| `.agents/plugins/marketplace.json` → `plugins[].source.ref` | `<plugin-name>--v<version>` |
 
-Codex versions may include a cachebuster suffix such as `0.1.1+codex.20260708201530` during local development. Keep the base version aligned with the release version.
+The Codex `source.ref` is the tag Codex actually installs from. Before it was derived, a release could bump every visible version, pass `claude plugin tag`, and still leave Codex users installing the previous release.
+
+Plugins are discovered by name and iterated. Nothing in the tooling assumes a single plugin, so adding a second one means adding catalog entries — not editing scripts or tests.
+
+### The catalog version is not a plugin version
+
+The **top-level** `version` in `.claude-plugin/marketplace.json` describes the catalog itself. The tooling leaves it alone.
+
+It currently mirrors `tonder-web-sdk` only because there is exactly one plugin. With three plugins on independent release cadences, a catalog version tracking one of them would be meaningless. Bump it by hand when the catalog's shape changes — a plugin added, removed, renamed, or re-categorized — not when a plugin ships a patch.
+
+### Idempotence
+
+Running the sync twice is idempotent except for the Codex `+codex.<timestamp>` suffix, which is regenerated on every run by design. Its job is to force Codex to invalidate a cached install; a stable value would defeat it. Only the base version carries meaning, and the drift test compares only the base.
+
+### Not derived
+
+`CHANGELOG.md` and `docs/releases/<version>.md` are narrative. Write them by hand.
 
 ## Validation checklist
 
@@ -200,11 +237,36 @@ Source of truth is the committed README snapshot rather than a fetched `dist/ind
 
 When the check fails, fix the recipe in `docs/web-sdk/recipes/`, not the generated copy.
 
+### Plugin version drift check
+
+`npm test` includes `src/__tests__/plugin-version-sync.test.ts`. The sync script derives every plugin version, but nothing forces a maintainer to run it — this test is what makes the single source of truth real.
+
+For every plugin in `.claude-plugin/marketplace.json`, it asserts that the Claude plugin manifest, the Codex plugin manifest, and the Codex `source.ref` all agree with `plugins[].version`. It also asserts both catalogs list the same plugins.
+
+The Codex version carries a `+codex.<timestamp>` suffix, so the comparison is on the base version before `+`. The suffix is ignored; the base is not. A Codex manifest pinned to `0.1.12+codex.<anything>` while the catalog says `0.1.13` fails.
+
+Failures name the file and the mismatch:
+
+```text
+.agents/plugins/marketplace.json: plugins[tonder-web-sdk].source.ref is
+"tonder-web-sdk--v0.1.12", expected "tonder-web-sdk--v0.1.13"
+```
+
+| It catches | It does not catch |
+| --- | --- |
+| A derived copy edited by hand | Whether the version is the *right* version |
+| A release that skipped the sync script | A stale `CHANGELOG.md` or missing release notes |
+| A Codex `source.ref` left on the previous tag | A tag that was never pushed |
+| A plugin listed in one catalog but not the other | A version that was bumped in the wrong direction |
+
+When it fails, do not edit the derived file. Fix `plugins[].version` if the source is wrong, then run `node scripts/sync-web-sdk-skill.mjs`.
+
 ## Merge checklist
 
 Before merging a feature branch:
 
 - [ ] Source files were edited, not generated plugin copies.
+- [ ] No version number was typed into a derived file.
 - [ ] `npm run sync:docs` was run against GitHub sources.
 - [ ] `npm test` and `npm run build` pass in `packages/tonder-mcp`.
 - [ ] `node scripts/sync-web-sdk-skill.mjs` was run.
@@ -231,10 +293,10 @@ https://github.com/tonderio/tonder-ai-integrations
 
 Release flow:
 
-1. Bump the Claude plugin version and Claude marketplace version.
-2. Bump the Codex plugin base version and Codex marketplace tag ref.
+1. Bump `plugins[].version` for the plugin being released in `.claude-plugin/marketplace.json`. This is the only version you type.
+2. Run `node scripts/sync-web-sdk-skill.mjs` to stamp the Claude manifest, the Codex manifest, and the Codex `source.ref`.
 3. Update `CHANGELOG.md` and `docs/releases/<version>.md`.
-4. Run the validation checklist.
+4. Run the validation checklist. `npm test` fails if any derived version drifted.
 5. Merge to `main`.
 6. Create the release tag from `main`:
 
@@ -279,11 +341,13 @@ Codex uses `.agents/plugins/marketplace.json` as the marketplace manifest. The p
 
 Users can add the marketplace in the Codex app or CLI, then install `tonder-web-sdk` from **Tonder AI Integrations**. For Codex Desktop, use the GitHub repository as the origin, `main` as the Git ref, and leave sparse paths empty unless the current Codex build requires otherwise.
 
-For stable releases, pin the Codex marketplace source ref to the release tag:
+The marketplace `source.ref` pins the release tag and is stamped by the sync script as `<plugin-name>--v<version>`:
 
 ```json
-"ref": "tonder-web-sdk--v0.1.8"
+"ref": "tonder-web-sdk--v0.1.13"
 ```
+
+Do not edit it by hand. Bump `plugins[].version` in `.claude-plugin/marketplace.json` and re-run the sync; `npm test` fails if the ref falls out of step.
 
 For development testing only, install from a branch ref with `codex plugin marketplace add --ref <branch>`.
 

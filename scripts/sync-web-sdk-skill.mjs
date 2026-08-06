@@ -2,6 +2,7 @@
 import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { syncPluginVersions } from './sync-plugin-versions.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,4 +47,13 @@ for (const pluginRoot of targets) {
 
   console.log(`Synced ${path.relative(root, sourceSkill)} -> ${path.relative(root, skillTarget)}`);
   console.log(`Synced MCP package -> ${path.relative(root, mcpTarget)}`);
+}
+
+// Version stamping runs last so the packaged plugins carry the version the
+// Claude catalog declares. Maintainers edit one number; this derives the rest.
+try {
+  for (const line of syncPluginVersions(root)) console.log(`Stamped ${line}`);
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
 }
