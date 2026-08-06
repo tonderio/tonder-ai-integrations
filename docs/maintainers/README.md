@@ -38,6 +38,7 @@ Edit source content here:
 | MCP documentation snapshot | `packages/tonder-mcp/docs/` |
 | Maintained integration recipes | `packages/tonder-mcp/docs/web-sdk/recipes/` |
 | Plugin version | `.claude-plugin/marketplace.json` → `plugins[].version` |
+| Plugin-to-skill mapping | `plugin-packaging.json` → `plugins[<name>].skills` |
 | Root marketplace docs | `README.md` |
 
 Do not edit generated skill copies inside plugin packages directly. They are overwritten by the sync script.
@@ -103,12 +104,9 @@ For a tagged SDK release candidate, override both URLs:
 TONDER_WEB_SDK_PACKAGE_JSON_URL=https://raw.githubusercontent.com/tonderio/web-sdk/v0.2.0/package.json TONDER_WEB_SDK_README_URL=https://raw.githubusercontent.com/tonderio/web-sdk/v0.2.0/README.md npm run sync:docs
 ```
 
-The sync script packages the source skill and the local `tonder-docs` MCP runtime into:
+The sync script then assembles every plugin package: the skills that plugin declares, plus the local `tonder-docs` MCP runtime. It discovers both the plugins and their package directories from the marketplace catalogs, so no plugin name or path appears in the script. See [Packaging](#packaging).
 
-- `plugins/codex/tonder-web-sdk/`
-- `plugins/claude-code/tonder-web-sdk/`
-
-It then stamps every derived plugin version from `.claude-plugin/marketplace.json`. See [Versioning](#versioning).
+It finally stamps every derived plugin version from `.claude-plugin/marketplace.json`. See [Versioning](#versioning).
 
 The plugin MCP runtime must remain self-contained for GitHub marketplace installs. Do not rely on `node_modules` being present in installed plugins. `packages/tonder-mcp` builds a bundled `dist/server.js`, and that `mcp/dist/server.js` file must be committed inside each plugin package.
 
@@ -151,6 +149,50 @@ Upload the file through **Settings → Plugins → Add → Upload plugin**. Open
 
 Do not document local `.plugin` upload as the primary public install path. It is only a maintainer fallback for branch testing or repository marketplace issues.
 
+## Packaging
+
+`scripts/sync-web-sdk-skill.mjs` builds each installable package. Per plugin, per package directory, it rebuilds `skills/` from the declared source skills and `mcp/` from the built `tonder-docs` runtime. Both directories are wiped first, so a renamed or removed skill cannot survive as a stale copy inside a shipped package.
+
+### Where the plugin-to-skill mapping lives
+
+`plugin-packaging.json`, at the repository root:
+
+```json
+{
+  "plugins": {
+    "tonder-web-sdk": { "skills": ["tonder-web-sdk-integrator"] }
+  }
+}
+```
+
+Keyed by the plugin name from `.claude-plugin/marketplace.json` — the same key the version tooling matches both catalogs on. Values are skill directory names under `skills/`.
+
+`skills` is an array. A plugin may bundle more than one skill, and adding one later must not require reshaping this file. Today every plugin bundles exactly one.
+
+The mapping is **not** in the marketplace manifests or the plugin manifests. Those four files are consumed by Claude's and Codex's validators, and adding a repository-specific build field to a published contract risks failing validation on their next schema change. The Codex manifest's `"skills": "./skills/"` is a directory pointer for the installed package, not a build input.
+
+### Adding a second plugin
+
+Data only. Do not edit a script.
+
+1. Add the plugin to `.claude-plugin/marketplace.json`, with its `version` and `source`.
+2. Add the matching entry to `.agents/plugins/marketplace.json`.
+3. Add the source skill under `skills/<skill-name>/`.
+4. Add `"<plugin-name>": { "skills": ["<skill-name>"] }` to `plugin-packaging.json`.
+5. Create the package directories with their `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, `.mcp.json`, and `README.md`. The sync generates `skills/` and `mcp/`; it does not generate manifests.
+6. Run `node scripts/sync-web-sdk-skill.mjs`.
+
+### Failures are loud
+
+A plugin declaring a skill that does not exist stops the sync, naming both:
+
+```text
+Plugin "tonder-web-sdk" declares skill "tonder-react-native-integrator" in
+plugin-packaging.json, but skills/tonder-react-native-integrator/ does not exist.
+```
+
+Skipping it silently would ship a plugin that installs, starts its MCP server, and offers the agent nothing. The same applies to a catalog plugin with no packaging entry and to a packaging entry with no catalog plugin.
+
 ## Versioning
 
 Bump one number, then run the sync. Everything else is stamped.
@@ -180,7 +222,7 @@ node scripts/sync-web-sdk-skill.mjs
 
 The Codex `source.ref` is the tag Codex actually installs from. Before it was derived, a release could bump every visible version, pass `claude plugin tag`, and still leave Codex users installing the previous release.
 
-Plugins are discovered by name and iterated. Nothing in the tooling assumes a single plugin, so adding a second one means adding catalog entries — not editing scripts or tests.
+Plugins are discovered by name and iterated. Nothing in the tooling assumes a single plugin, so adding a second one means adding catalog entries and a `plugin-packaging.json` entry — not editing scripts or tests. See [Adding a second plugin](#adding-a-second-plugin).
 
 ### The catalog version is not a plugin version
 
@@ -261,12 +303,37 @@ Failures name the file and the mismatch:
 
 When it fails, do not edit the derived file. Fix `plugins[].version` if the source is wrong, then run `node scripts/sync-web-sdk-skill.mjs`.
 
+### Plugin packaging drift check
+
+`npm test` includes `src/__tests__/plugin-packaging-sync.test.ts`. The version check proves the numbers agree; this one proves the package actually contains what it claims to ship.
+
+For every plugin in `.claude-plugin/marketplace.json`, and every package directory that plugin ships, it asserts that each skill declared in `plugin-packaging.json` is present and byte-identical to its source under `skills/`, that no undeclared skill is shipped, and that the MCP payload — `mcp/dist/server.js`, `mcp/package.json`, `mcp/docs/` — matches `packages/tonder-mcp/`.
+
+It re-reads the filesystem and does not import `scripts/lib/plugin-packaging.mjs`. A guard sharing code with what it guards inherits its bugs and passes on a wrong-but-consistent result. The version drift check is written the same way, for the same reason.
+
+Failures name the plugin and what is missing:
+
+```text
+plugin "tonder-web-sdk": skill "tonder-web-sdk-integrator" is missing from
+plugins/codex/tonder-web-sdk/skills/. Run: node scripts/sync-web-sdk-skill.mjs
+```
+
+| It catches | It does not catch |
+| --- | --- |
+| A package committed without its skill directory | Whether the source skill is *correct* |
+| A skill edited in the package instead of at the source | Whether the MCP bundle behaves correctly |
+| A stale MCP bundle from a skipped `npm run build` | A skill that is present but out of date relative to the SDK |
+| A skill declared in the config but never packaged | Manifest fields, which the marketplace validators cover |
+
+When it fails, do not edit the packaged copy. Fix the source, then run `node scripts/sync-web-sdk-skill.mjs`.
+
 ## Merge checklist
 
 Before merging a feature branch:
 
 - [ ] Source files were edited, not generated plugin copies.
 - [ ] No version number was typed into a derived file.
+- [ ] A new plugin was added as data — catalogs, `skills/`, `plugin-packaging.json` — not by editing a script.
 - [ ] `npm run sync:docs` was run against GitHub sources.
 - [ ] `npm test` and `npm run build` pass in `packages/tonder-mcp`.
 - [ ] `node scripts/sync-web-sdk-skill.mjs` was run.

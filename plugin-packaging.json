@@ -1,0 +1,8 @@
+{
+  "$comment": "Build configuration: which source skills each plugin bundles. Keyed by the plugin name used in .claude-plugin/marketplace.json. Skill names resolve to skills/<name>/. Adding a plugin means adding a key here, not editing a script. See docs/maintainers/README.md.",
+  "plugins": {
+    "tonder-web-sdk": {
+      "skills": ["tonder-web-sdk-integrator"]
+    }
+  }
+}

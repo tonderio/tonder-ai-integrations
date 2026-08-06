@@ -58,6 +58,9 @@ export function codexVersion(version, now = new Date()) {
  *
  *   name              plugin name, the key both catalogs are matched on
  *   version           source of truth, from the Claude catalog
+ *   claudePackage     repo-relative path to the Claude plugin package directory
+ *   codexPackage      repo-relative path to the Codex plugin package directory, or null
+ *   packageRoots      every package directory above, in catalog order
  *   claudeManifest    repo-relative path to the Claude plugin.json
  *   codexManifest     repo-relative path to the Codex plugin.json, or null
  *   expectedRef       `<name>--v<version>`, the tag Codex installs from
@@ -89,12 +92,16 @@ export function discoverPlugins(root) {
     }
 
     const codexEntry = codexByName.get(name);
-    const codexPackage = codexEntry?.source?.path;
+    const claudePackage = path.join(source);
+    const codexPackage = codexEntry?.source?.path ? path.join(codexEntry.source.path) : null;
 
     return {
       name,
       version,
-      claudeManifest: path.join(source, '.claude-plugin', 'plugin.json'),
+      claudePackage,
+      codexPackage,
+      packageRoots: [claudePackage, codexPackage].filter(Boolean),
+      claudeManifest: path.join(claudePackage, '.claude-plugin', 'plugin.json'),
       codexManifest: codexPackage ? path.join(codexPackage, '.codex-plugin', 'plugin.json') : null,
       expectedRef: releaseTag(name, version),
       actualRef: codexEntry?.source?.ref ?? null,

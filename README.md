@@ -155,6 +155,7 @@ The plugin guides the agent to:
 | --- | --- |
 | `.claude-plugin/marketplace.json` | Claude marketplace manifest. |
 | `.agents/plugins/marketplace.json` | Codex marketplace manifest. |
+| `plugin-packaging.json` | Build config: which source skills each plugin bundles. |
 | `plugins/claude-code/tonder-web-sdk/` | Installable Claude plugin package. |
 | `plugins/codex/tonder-web-sdk/` | Installable Codex plugin package. |
 | `skills/tonder-web-sdk-integrator/` | Source skill copied into each plugin package. |
@@ -202,6 +203,33 @@ python3 /Users/dave/.codex/skills/.system/plugin-creator/scripts/validate_plugin
 ```
 
 For complete branch, local testing, and release instructions, see [`docs/maintainers/README.md`](docs/maintainers/README.md).
+
+## Plugin packaging
+
+`node scripts/sync-web-sdk-skill.mjs` assembles every installable plugin package. It names no plugin, no skill, and no directory: plugins come from the marketplace catalogs, and the skills each one bundles come from `plugin-packaging.json`.
+
+```json
+{
+  "plugins": {
+    "tonder-web-sdk": { "skills": ["tonder-web-sdk-integrator"] }
+  }
+}
+```
+
+The key is the plugin name from `.claude-plugin/marketplace.json`. Each entry lists skill directory names under `skills/`. The list is an array because a plugin may bundle more than one skill; today each one bundles exactly one.
+
+Adding a second plugin is a data change:
+
+1. Add the plugin to `.claude-plugin/marketplace.json` and `.agents/plugins/marketplace.json`.
+2. Add its source skill under `skills/<skill-name>/`.
+3. Add its entry to `plugin-packaging.json`.
+4. Run `node scripts/sync-web-sdk-skill.mjs`.
+
+No script changes. A plugin that declares a skill which does not exist fails the sync immediately, naming both the plugin and the missing directory — a silent skip would ship a plugin with no skill.
+
+The mapping lives outside the marketplace manifests on purpose. Those files are validated by Claude and Codex, so this repository does not add build fields to them. `plugin-packaging.json` describes how packages are assembled, which is this repository's concern rather than the marketplaces'.
+
+`npm test` in `packages/tonder-mcp` fails if a packaged skill or the bundled MCP payload is missing or does not match its source.
 
 ## Plugin versions
 
