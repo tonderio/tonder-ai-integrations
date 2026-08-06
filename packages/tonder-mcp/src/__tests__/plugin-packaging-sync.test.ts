@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 /**
  * Plugin packaging drift check.
  *
- * `scripts/sync-web-sdk-skill.mjs` assembles every plugin package from source.
+ * `scripts/sync-plugin-packages.mjs` assembles every plugin package from source.
  * Nothing forces a maintainer to run it, and nothing stops a package from being
  * committed half-built. A plugin missing its skill directory still installs and
  * still starts its MCP server — it just does nothing an agent can use. That
@@ -207,7 +207,7 @@ describe('plugin packaging', () => {
           if (!isDirectory(packagedDir)) {
             problems.push(
               `plugin "${plugin.name}": skill "${skill}" is missing from ${packageRoot}/skills/. ` +
-                'Run: node scripts/sync-web-sdk-skill.mjs'
+                'Run: node scripts/sync-plugin-packages.mjs'
             );
             continue;
           }
@@ -237,7 +237,7 @@ describe('plugin packaging', () => {
         const mcpDir = path.join(repoRoot, packageRoot, 'mcp');
 
         if (!isDirectory(mcpDir)) {
-          problems.push(`${label}: ${packageRoot}/mcp/ is missing. Run: node scripts/sync-web-sdk-skill.mjs`);
+          problems.push(`${label}: ${packageRoot}/mcp/ is missing. Run: node scripts/sync-plugin-packages.mjs`);
           continue;
         }
 

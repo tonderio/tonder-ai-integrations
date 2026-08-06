@@ -13,7 +13,7 @@
  * describes the catalog, not any plugin in it, and maintainers bump it by hand
  * when the catalog's shape changes. See docs/maintainers/README.md.
  *
- * Run directly, or let `scripts/sync-web-sdk-skill.mjs` call it.
+ * Run directly, or let `scripts/sync-plugin-packages.mjs` call it.
  */
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

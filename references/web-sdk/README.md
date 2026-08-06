@@ -11,7 +11,7 @@ Plugin packages contain generated copies of that skill so Codex and Claude Code 
 After editing the source skill or references, run:
 
 ```bash
-node scripts/sync-web-sdk-skill.mjs
+node scripts/sync-plugin-packages.mjs
 ```
 
 The sync script uses Node.js filesystem APIs so it works on macOS, Linux, and Windows.

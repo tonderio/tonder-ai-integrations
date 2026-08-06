@@ -53,7 +53,7 @@ Do not edit the packaged skill copy directly. Edit the source skill at:
 Then run from the repository root:
 
 ```bash
-node scripts/sync-web-sdk-skill.mjs
+node scripts/sync-plugin-packages.mjs
 ```
 
 ## Bundled MCP

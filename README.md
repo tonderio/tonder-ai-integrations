@@ -193,7 +193,7 @@ npm test
 npm run build
 cd ../..
 
-node scripts/sync-web-sdk-skill.mjs
+node scripts/sync-plugin-packages.mjs
 
 claude plugin validate ./plugins/claude-code/tonder-web-sdk
 claude plugin validate .
@@ -206,7 +206,7 @@ For complete branch, local testing, and release instructions, see [`docs/maintai
 
 ## Plugin packaging
 
-`node scripts/sync-web-sdk-skill.mjs` assembles every installable plugin package. It names no plugin, no skill, and no directory: plugins come from the marketplace catalogs, and the skills each one bundles come from `plugin-packaging.json`.
+`node scripts/sync-plugin-packages.mjs` assembles every installable plugin package. It names no plugin, no skill, and no directory: plugins come from the marketplace catalogs, and the skills each one bundles come from `plugin-packaging.json`.
 
 ```json
 {
@@ -223,7 +223,7 @@ Adding a second plugin is a data change:
 1. Add the plugin to `.claude-plugin/marketplace.json` and `.agents/plugins/marketplace.json`.
 2. Add its source skill under `skills/<skill-name>/`.
 3. Add its entry to `plugin-packaging.json`.
-4. Run `node scripts/sync-web-sdk-skill.mjs`.
+4. Run `node scripts/sync-plugin-packages.mjs`.
 
 No script changes. A plugin that declares a skill which does not exist fails the sync immediately, naming both the plugin and the missing directory — a silent skip would ship a plugin with no skill.
 
@@ -239,7 +239,7 @@ Each plugin declares its version in exactly one place:
 .claude-plugin/marketplace.json -> plugins[].version
 ```
 
-Every other version-bearing field is derived from it by `node scripts/sync-web-sdk-skill.mjs`:
+Every other version-bearing field is derived from it by `node scripts/sync-plugin-packages.mjs`:
 
 | Derived location | Stamped value |
 | --- | --- |

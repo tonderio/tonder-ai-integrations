@@ -72,7 +72,7 @@ npm test
 npm run build
 cd ../..
 
-node scripts/sync-web-sdk-skill.mjs
+node scripts/sync-plugin-packages.mjs
 ```
 
 `npm run sync:docs` is mandatory. It reads the SDK version from the Web SDK `package.json` and writes docs to `packages/tonder-mcp/docs/web-sdk/<sdk-version>/`.
@@ -151,7 +151,7 @@ Do not document local `.plugin` upload as the primary public install path. It is
 
 ## Packaging
 
-`scripts/sync-web-sdk-skill.mjs` builds each installable package. Per plugin, per package directory, it rebuilds `skills/` from the declared source skills and `mcp/` from the built `tonder-docs` runtime. Both directories are wiped first, so a renamed or removed skill cannot survive as a stale copy inside a shipped package.
+`scripts/sync-plugin-packages.mjs` builds each installable package. Per plugin, per package directory, it rebuilds `skills/` from the declared source skills and `mcp/` from the built `tonder-docs` runtime. Both directories are wiped first, so a renamed or removed skill cannot survive as a stale copy inside a shipped package.
 
 ### Where the plugin-to-skill mapping lives
 
@@ -180,7 +180,7 @@ Data only. Do not edit a script.
 3. Add the source skill under `skills/<skill-name>/`.
 4. Add `"<plugin-name>": { "skills": ["<skill-name>"] }` to `plugin-packaging.json`.
 5. Create the package directories with their `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, `.mcp.json`, and `README.md`. The sync generates `skills/` and `mcp/`; it does not generate manifests.
-6. Run `node scripts/sync-web-sdk-skill.mjs`.
+6. Run `node scripts/sync-plugin-packages.mjs`.
 
 ### Failures are loud
 
@@ -205,14 +205,14 @@ Bump one number, then run the sync. Everything else is stamped.
 ```
 
 ```bash
-node scripts/sync-web-sdk-skill.mjs
+node scripts/sync-plugin-packages.mjs
 ```
 
 `plugins[].version` in `.claude-plugin/marketplace.json` is the **single source of truth** for a plugin's version. It already lists plugins by name, and it is the field Claude's own release helper validates against, so making it authoritative adds no new file to keep in sync.
 
 ### What the sync derives
 
-`scripts/sync-plugin-versions.mjs` runs at the end of `scripts/sync-web-sdk-skill.mjs` and stamps, for every plugin in the catalog:
+`scripts/sync-plugin-versions.mjs` runs at the end of `scripts/sync-plugin-packages.mjs` and stamps, for every plugin in the catalog:
 
 | Derived location | Stamped value |
 | --- | --- |
@@ -251,7 +251,7 @@ npm test
 npm run build
 cd ../..
 
-node scripts/sync-web-sdk-skill.mjs
+node scripts/sync-plugin-packages.mjs
 
 claude plugin validate ./plugins/claude-code/tonder-web-sdk
 claude plugin validate .
@@ -301,7 +301,7 @@ Failures name the file and the mismatch:
 | A Codex `source.ref` left on the previous tag | A tag that was never pushed |
 | A plugin listed in one catalog but not the other | A version that was bumped in the wrong direction |
 
-When it fails, do not edit the derived file. Fix `plugins[].version` if the source is wrong, then run `node scripts/sync-web-sdk-skill.mjs`.
+When it fails, do not edit the derived file. Fix `plugins[].version` if the source is wrong, then run `node scripts/sync-plugin-packages.mjs`.
 
 ### Plugin packaging drift check
 
@@ -315,7 +315,7 @@ Failures name the plugin and what is missing:
 
 ```text
 plugin "tonder-web-sdk": skill "tonder-web-sdk-integrator" is missing from
-plugins/codex/tonder-web-sdk/skills/. Run: node scripts/sync-web-sdk-skill.mjs
+plugins/codex/tonder-web-sdk/skills/. Run: node scripts/sync-plugin-packages.mjs
 ```
 
 | It catches | It does not catch |
@@ -325,7 +325,7 @@ plugins/codex/tonder-web-sdk/skills/. Run: node scripts/sync-web-sdk-skill.mjs
 | A stale MCP bundle from a skipped `npm run build` | A skill that is present but out of date relative to the SDK |
 | A skill declared in the config but never packaged | Manifest fields, which the marketplace validators cover |
 
-When it fails, do not edit the packaged copy. Fix the source, then run `node scripts/sync-web-sdk-skill.mjs`.
+When it fails, do not edit the packaged copy. Fix the source, then run `node scripts/sync-plugin-packages.mjs`.
 
 ## Merge checklist
 
@@ -336,7 +336,7 @@ Before merging a feature branch:
 - [ ] A new plugin was added as data — catalogs, `skills/`, `plugin-packaging.json` — not by editing a script.
 - [ ] `npm run sync:docs` was run against GitHub sources.
 - [ ] `npm test` and `npm run build` pass in `packages/tonder-mcp`.
-- [ ] `node scripts/sync-web-sdk-skill.mjs` was run.
+- [ ] `node scripts/sync-plugin-packages.mjs` was run.
 - [ ] Claude plugin validation passes.
 - [ ] Claude marketplace validation passes.
 - [ ] Codex plugin validation passes.
@@ -361,7 +361,7 @@ https://github.com/tonderio/tonder-ai-integrations
 Release flow:
 
 1. Bump `plugins[].version` for the plugin being released in `.claude-plugin/marketplace.json`. This is the only version you type.
-2. Run `node scripts/sync-web-sdk-skill.mjs` to stamp the Claude manifest, the Codex manifest, and the Codex `source.ref`.
+2. Run `node scripts/sync-plugin-packages.mjs` to stamp the Claude manifest, the Codex manifest, and the Codex `source.ref`.
 3. Update `CHANGELOG.md` and `docs/releases/<version>.md`.
 4. Run the validation checklist. `npm test` fails if any derived version drifted.
 5. Merge to `main`.

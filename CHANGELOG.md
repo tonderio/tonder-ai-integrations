@@ -2,6 +2,12 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.15 - 2026-08-06
+
+### Changed
+
+- `scripts/sync-web-sdk-skill.mjs` is now `scripts/sync-plugin-packages.mjs`. The old name described what it did before it packaged every plugin from a declared skill mapping, and it would have misled whoever adds the second plugin — the exact reader the previous release was written for. The `0.1.14` notes below still use the old name, because that is what shipped in that release.
+
 ## 0.1.14 - 2026-08-06
 
 ### Changed
