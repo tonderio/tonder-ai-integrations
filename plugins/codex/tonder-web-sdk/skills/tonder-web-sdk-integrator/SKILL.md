@@ -1,6 +1,6 @@
 ---
 name: tonder-web-sdk-integrator
-description: Use when integrating the Tonder Web SDK into a merchant web project. Supports browser-based web apps including vanilla HTML, React, Next.js, Angular, and similar frameworks; card payments, card enrollment, saved cards, payment methods, SafetyPay banks, embedded or redirect presentation, CDN or npm setup, and validation that raw card data is not handled by merchant code. Requires the bundled tonder-docs MCP server as the integration source of truth.
+description: Use when integrating the Tonder Web SDK into a merchant web project. Supports browser-based web apps including vanilla HTML, React, Next.js, Angular, and similar frameworks; card payments, card enrollment, saved cards, payment methods, SafetyPay banks, Apple Pay, embedded or redirect presentation, CDN or npm setup, and validation that raw card data is not handled by merchant code. Requires the bundled tonder-docs MCP server as the integration source of truth.
 ---
 
 # Tonder Web SDK Integrator
@@ -47,7 +47,8 @@ If `tonder-docs` MCP is unavailable or does not return the required information,
    - saved cards: shopper pays with an existing saved card, sometimes with CVV collection.
    - payment methods: shopper pays with an alternative method such as SPEI or OXXO Pay.
    - SafetyPay banks: shopper selects a SafetyPay bank for cash/transfer flows.
-5. Confirm presentation mode if the flow can require hosted authentication and the user did not specify it. Stop and ask one question before editing; do not choose a default. Explain both choices in the question:
+   - Apple Pay: the SDK renders an Apple Pay button and owns the tap; there is no `pay()` call.
+5. Confirm presentation mode if the flow can require hosted authentication and the user did not specify it. Stop and ask one question before editing; do not choose a default. Explain both choices in the question. Apple Pay never uses hosted authentication, so do not ask for presentation mode when the selected flow is Apple Pay:
    - `embedded`: Tonder opens the hosted authentication/checkout step in an SDK modal/iframe inside the merchant page.
    - `redirect`: the browser navigates to the hosted step and returns to the provided `return_url`.
 6. Confirm SDK loading strategy unless the user already specified it. Stop and ask one question before editing; do not choose a default for React/Angular/bundled apps. Explain both choices in the question. For a plain static HTML page, CDN may be inferred only when there is no package manager or bundler:
@@ -75,7 +76,23 @@ If `tonder-docs` MCP is unavailable or does not return the required information,
 | Saved cards | `get_integration_recipe`, `get_sdk_api_reference` for `getCustomerCards`, saved-card payment, CVV/card fields |
 | Payment methods | `get_integration_recipe`, `get_sdk_api_reference` for `getPaymentMethods` and `pay` |
 | SafetyPay banks | `get_integration_recipe`, `get_sdk_api_reference` for `getPaymentMethodBanks`, SafetyPay config, and `pay` |
+| Apple Pay | `get_integration_recipe` with `flow: 'apple_pay'`, `get_sdk_api_reference` for `isApplePayAvailable` and `apple_pay_button` |
 | Error/status handling | `get_error_reference`, `get_payment_status_reference` |
+
+## Apple Pay
+
+Apple Pay is the one flow that is not a `pay()` call. It is a mountable component: the SDK renders the button and owns the click. Treating it like the other flows produces code that cannot work.
+
+| Rule | What it means for the integration |
+| ---- | --------------------------------- |
+| Check availability before rendering | Call `tonder.isApplePayAvailable()` after `init()`. It returns `{ available: true }` or `{ available: false, code, message }` — an object, never a boolean. Read `.available`; using the object itself as a condition is always truthy and is a bug. Render the container and mount only when `available` is `true`, and log `code` otherwise. |
+| The container is merchant-supplied | Render an empty container the SDK mounts into, default `#tonder-apple-pay-button`, or pass `container_id`. Never render merchant-owned button markup, label text, or Apple logo inside it. Style the button through `customization.apple_pay_button` on `createTonder()`. |
+| The payment function is synchronous | `payment` may be an object or a function. If it is a function it must be synchronous and free of `await`, because Apple requires the sheet to open in the same tick as the tap. Fetch any server-side data before the tap and read it from a variable inside the function. |
+| Results come through events | There is no promise to await. Handle `events.payment.on_completed`, `on_error`, and `on_cancel` from `createTonder()`. `on_completed` fires for declines too, so branch on `transaction.status`; `on_cancel` is not an error. |
+| Teardown is required | Call `button.unmount()` when the checkout view is destroyed. On a client-side route change an orphaned sheet can still be authorized and will charge with stale payment data. |
+| Domain registration is a prerequisite | Apple Pay on the Web requires the production domain to be registered and verified with Apple, and Apple Pay must be enabled for the business in Tonder. Neither is an SDK option. Tell the developer explicitly; this is the most likely production-only failure and it surfaces after the tap as a merchant-validation error on `on_error`, not as an availability code. |
+
+Do not offer Apple Pay through `getPaymentMethods()` results or `pay({ payment_method: { type: 'apple_pay' } })`. That call is rejected by design.
 
 ## Hard rules
 
@@ -84,6 +101,9 @@ If `tonder-docs` MCP is unavailable or does not return the required information,
 - Do not add merchant-owned labels, input borders, padding, or field-card wrappers around SDK secure-field containers; the SDK renders labels, inputs, validation, and errors inside the secure iframe. Merchant CSS may only control layout such as width, max-height, margin, grid, or gap. When creating secure-field containers, use `.card-field { width: 100%; max-height: 90px; }` unless the app already has equivalent layout styles. `customization.card_fields.styles` may style the SDK-rendered secure input, label, error, and icon inside the iframe, including input-level sizing when supported by the SDK renderer. It does not replace the merchant CSS needed to cap the mount container height while the iframe initializes; keep container sizing such as `.card-field { width: 100%; max-height: 90px; }` in merchant CSS.
 - For Angular CDN/global SDK integrations, use Angular `signal()` state for loading/status UI or call `ChangeDetectorRef.detectChanges()` after SDK promises/callbacks. `NgZone.run(...)` alone may not update zoneless Angular apps.
 - Keep public payload fields in snake_case.
+- Never implement Apple Pay through `pay()`. Use `tonder.create('apple_pay_button', { payment })` plus `mount()`, gate it on `tonder.isApplePayAvailable().available`, read results from `events.payment`, and `unmount()` on teardown.
+- Never treat `isApplePayAvailable()` as a boolean. Read the `available` property.
+- Never make an Apple Pay `payment` callback `async` or put `await` inside it.
 - Read the Tonder public API key and SDK environment from the app's public environment/configuration system instead of hardcoding merchant values in components or scripts. Use framework-appropriate access: Vite uses `import.meta.env.VITE_*`, Next.js Client Components use `process.env.NEXT_PUBLIC_*`, Angular uses `environment.ts`/file replacements, and plain HTML uses merchant-provided public runtime config such as a server-rendered `window.__TONDER_CONFIG__`.
 - Do not force `currency` into environment variables; it is merchant checkout/business data unless the existing app already centralizes it in config.
 - Require `client_reference` for payments; it is the merchant order/reference used in dashboards, reports, webhooks, and transaction records.

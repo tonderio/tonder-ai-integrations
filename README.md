@@ -28,6 +28,7 @@ Supported flows:
 - Saved-card payment
 - Payment methods
 - SafetyPay banks
+- Apple Pay
 
 ## Runtime requirement
 
@@ -132,6 +133,10 @@ Use Tonder Web SDK to add card enrollment to this Angular account settings page.
 
 ```text
 Use Tonder Web SDK to add payment methods and SafetyPay bank selection to this HTML checkout.
+```
+
+```text
+Use Tonder Web SDK to add the Apple Pay button to this React checkout.
 ```
 
 ## What the plugin does

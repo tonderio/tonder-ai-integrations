@@ -16,10 +16,13 @@ function listMarkdownFiles(directory: string): string[] {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+const VERSION_DIR_PATTERN = /^\d+\.\d+\.\d+/;
+
 function latestWebSdkDocsDir() {
   const docsRoot = path.resolve(__dirname, '../../docs/web-sdk');
   const versions = readdirSync(docsRoot, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
+    // `docs/web-sdk/recipes` is the unversioned maintained-recipe source, not a snapshot.
+    .filter((entry) => entry.isDirectory() && VERSION_DIR_PATTERN.test(entry.name))
     .map((entry) => entry.name)
     .sort((left, right) => right.localeCompare(left, undefined, { numeric: true }));
   return path.join(docsRoot, versions[0]);
@@ -34,13 +37,13 @@ describe('docs registry', () => {
   });
 
   it('returns API reference content by topic', () => {
-    const reference = getSdkApiReference({ sdk: 'web-sdk', version: '0.1.0', topic: 'pay' });
+    const reference = getSdkApiReference({ sdk: 'web-sdk', topic: 'pay' });
     expect(reference.title).toContain('pay');
     expect(reference.content).toContain('client_reference');
   });
 
   it('returns a card payment recipe', () => {
-    const recipe = getIntegrationRecipe({ sdk: 'web-sdk', version: '0.1.0', framework: 'react', flow: 'card_payment', presentation_mode: 'embedded' });
+    const recipe = getIntegrationRecipe({ sdk: 'web-sdk', framework: 'react', flow: 'card_payment', presentation_mode: 'embedded' });
     expect(recipe.content).toContain('card_fields');
     expect(recipe.content).toContain('payment_method');
   });
@@ -55,6 +58,40 @@ describe('docs registry', () => {
 
 
 
+
+  it('returns an apple pay recipe with the component contract', () => {
+    for (const framework of ['html', 'react', 'angular'] as const) {
+      const recipe = getIntegrationRecipe({ sdk: 'web-sdk', framework, flow: 'apple_pay', presentation_mode: 'embedded' });
+
+      expect(recipe.content).toContain('isApplePayAvailable');
+      expect(recipe.content).toContain("create('apple_pay_button'");
+      expect(recipe.content).toContain('on_completed');
+      expect(recipe.content).toContain('on_cancel');
+      expect(recipe.content).toContain('unmount()');
+      expect(recipe.content).toContain('tonder-apple-pay-button');
+    }
+  });
+
+  it('does not teach apple pay through pay()', () => {
+    const recipe = getIntegrationRecipe({ sdk: 'web-sdk', framework: 'react', flow: 'apple_pay', presentation_mode: 'embedded' });
+
+    expect(recipe.content).toContain("`tonder.pay({ payment_method: { type: 'apple_pay' } })` is rejected on purpose");
+    expect(recipe.content).toContain('must be synchronous');
+    expect(recipe.content).not.toContain('await button.pay(');
+  });
+
+  it('keeps the apple pay recipe out of unrelated flows', () => {
+    const recipe = getIntegrationRecipe({ sdk: 'web-sdk', framework: 'react', flow: 'card_payment', presentation_mode: 'embedded' });
+
+    expect(recipe.content).not.toContain('# Apple Pay Integration Pattern');
+  });
+
+  it('resolves apple pay API reference topics', () => {
+    for (const topic of ['apple_pay', 'isApplePayAvailable', 'apple_pay_button']) {
+      const reference = getSdkApiReference({ sdk: 'web-sdk', topic });
+      expect(reference.content).toContain('apple_pay_button');
+    }
+  });
 
   it('does not leak hardcoded API reference examples into integration recipes', () => {
     const recipe = getIntegrationRecipe({ sdk: 'web-sdk', framework: 'react', flow: 'card_payment', presentation_mode: 'embedded' });
@@ -106,14 +143,14 @@ describe('docs registry', () => {
   });
 
   it('returns payment status reference', () => {
-    const status = getPaymentStatusReference({ sdk: 'web-sdk', version: '0.1.0' });
+    const status = getPaymentStatusReference({ sdk: 'web-sdk' });
     expect(status.content).toContain('Success');
     expect(status.content).toContain('Pending');
   });
 
   it('returns customization reference aliases', () => {
     for (const topic of ['customization', 'styles', 'TonderCustomization']) {
-      const reference = getSdkApiReference({ sdk: 'web-sdk', version: '0.1.0', topic });
+      const reference = getSdkApiReference({ sdk: 'web-sdk', topic });
       expect(reference.title).toContain('Configuration');
       expect(reference.content).toContain('customization.card_fields');
       expect(reference.content).toContain('input_styles');
@@ -130,7 +167,7 @@ describe('docs registry', () => {
     ];
 
     for (const [topic, expected] of cases) {
-      const reference = getSdkApiReference({ sdk: 'web-sdk', version: '0.1.0', topic });
+      const reference = getSdkApiReference({ sdk: 'web-sdk', topic });
       expect(reference.content).toContain(expected);
     }
   });

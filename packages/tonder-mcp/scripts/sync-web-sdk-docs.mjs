@@ -106,22 +106,30 @@ function compareSemverDesc(a, b) {
   return 0;
 }
 
-function findMaintainedRecipesDir() {
+const VERSION_DIR_PATTERN = /^\d+\.\d+\.\d+/;
+
+function listSnapshotVersions() {
   const sdkDocsRoot = path.join(root, 'docs', 'web-sdk');
-  if (!existsSync(sdkDocsRoot)) return null;
+  if (!existsSync(sdkDocsRoot)) return [];
 
-  const versions = readdirSync(sdkDocsRoot, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
+  return readdirSync(sdkDocsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && VERSION_DIR_PATTERN.test(entry.name))
     .map((entry) => entry.name)
-    .filter((entryVersion) => entryVersion !== version)
     .sort(compareSemverDesc);
+}
 
-  for (const entryVersion of versions) {
-    const recipesDir = path.join(sdkDocsRoot, entryVersion, 'recipes');
-    if (existsSync(recipesDir)) return recipesDir;
+/**
+ * Maintained recipes are hand-written and version independent. They live in a
+ * single unversioned directory and are copied INTO each generated snapshot, so
+ * a snapshot never has to inherit them from the previous version.
+ */
+function prunePreviousSnapshots(keepCount) {
+  const stale = listSnapshotVersions().slice(keepCount);
+  for (const staleVersion of stale) {
+    rmSync(path.join(root, 'docs', 'web-sdk', staleVersion), { recursive: true, force: true });
+    console.log(`Pruned stale Web SDK docs snapshot ${staleVersion}`);
   }
-
-  return null;
+  return stale;
 }
 
 const source = await readSource();
@@ -135,12 +143,14 @@ for (const section of sections) {
   writeFileSync(path.join(sectionsDir, filename), section.lines.join('\n').trim() + '\n');
   manifestSections[section.slug] = { title: section.title, path: `sections/${filename}` };
 }
-const recipesSourceDir = findMaintainedRecipesDir();
-if (recipesSourceDir) {
+const recipesSourceDir = path.join(root, 'docs', 'web-sdk', 'recipes');
+let recipesFrom = null;
+if (existsSync(recipesSourceDir)) {
   const recipesTargetDir = path.join(outDir, 'recipes');
   rmSync(recipesTargetDir, { recursive: true, force: true });
   cpSync(recipesSourceDir, recipesTargetDir, { recursive: true });
-  console.log(`Copied maintained recipes from ${path.relative(root, recipesSourceDir)}`);
+  recipesFrom = path.relative(root, recipesSourceDir);
+  console.log(`Copied maintained recipes from ${recipesFrom}`);
 }
 
 const manifest = {
@@ -153,8 +163,15 @@ const manifest = {
   sha256: createHash('sha256').update(source.content).digest('hex'),
   generated_at: new Date().toISOString(),
   readme: 'README.md',
+  recipes_from: recipesFrom,
   sections: manifestSections,
 };
 writeFileSync(path.join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 console.log(`Synced Web SDK docs ${version} from ${source.source}`);
 console.log(`Resolved Web SDK version ${version} from ${packageJsonUrl}`);
+
+// Pruning runs last, after the snapshot above is complete, so an interrupted
+// sync can never leave the package without a usable docs snapshot.
+const keepCount = Math.max(1, Number.parseInt(process.env.TONDER_DOCS_KEEP_VERSIONS || '1', 10) || 1);
+const pruned = prunePreviousSnapshots(keepCount);
+console.log(`Kept ${keepCount} Web SDK docs snapshot(s); pruned ${pruned.length}`);

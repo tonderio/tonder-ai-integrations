@@ -11,6 +11,9 @@ const sourceSkill = path.join(root, 'skills', 'tonder-web-sdk-integrator');
 const mcpPackageRoot = path.join(root, 'packages', 'tonder-mcp');
 const mcpDist = path.join(mcpPackageRoot, 'dist');
 const mcpDocs = path.join(mcpPackageRoot, 'docs');
+// Maintained-recipe source directory. The sync script already copied it into the
+// generated snapshot, so shipping it again would duplicate it in every plugin.
+const maintainedRecipesSource = path.join(mcpDocs, 'web-sdk', 'recipes');
 const mcpPackageJson = path.join(mcpPackageRoot, 'package.json');
 const targets = [
   path.join(root, 'plugins', 'codex', 'tonder-web-sdk'),
@@ -35,7 +38,10 @@ for (const pluginRoot of targets) {
   rmSync(mcpTarget, { recursive: true, force: true });
   mkdirSync(mcpTarget, { recursive: true });
   cpSync(mcpDist, path.join(mcpTarget, 'dist'), { recursive: true });
-  cpSync(mcpDocs, path.join(mcpTarget, 'docs'), { recursive: true });
+  cpSync(mcpDocs, path.join(mcpTarget, 'docs'), {
+    recursive: true,
+    filter: (source) => source !== maintainedRecipesSource,
+  });
   cpSync(mcpPackageJson, path.join(mcpTarget, 'package.json'));
 
   console.log(`Synced ${path.relative(root, sourceSkill)} -> ${path.relative(root, skillTarget)}`);

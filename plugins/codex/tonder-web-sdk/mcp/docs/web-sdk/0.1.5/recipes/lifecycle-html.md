@@ -1,1 +1,0 @@
-For plain HTML, read the Tonder public API key and SDK environment from merchant-provided public runtime config, such as a server-rendered `window.__TONDER_CONFIG__` object or a static config file generated per environment.

@@ -19,9 +19,16 @@ const server = new McpServer(
   }
 );
 
+const resourceUris = listResourceUris();
+// `sections/readme` also ends with `/readme`, so exclude section URIs explicitly.
+const readmeUri = resourceUris.find((value) => !value.includes('/sections/') && value.endsWith('/readme'));
+if (!readmeUri) {
+  throw new Error('No Web SDK README resource found in the bundled docs snapshot.');
+}
+
 server.registerResource(
   'tonder-web-sdk-readme',
-  'tonder://web-sdk/0.1.0/readme',
+  readmeUri,
   {
     title: 'Tonder Web SDK README',
     description: 'Full Tonder Web SDK README snapshot.',
@@ -32,7 +39,7 @@ server.registerResource(
   })
 );
 
-for (const uri of listResourceUris().filter((value) => value.includes('/sections/'))) {
+for (const uri of resourceUris.filter((value) => value.includes('/sections/'))) {
   const name = uri.split('/').at(-1) ?? uri;
   server.registerResource(
     `tonder-web-sdk-${name}`,
@@ -69,7 +76,7 @@ server.registerTool(
       sdk: z.literal('web-sdk').default('web-sdk'),
       version: z.string().optional(),
       framework: z.enum(['html', 'react', 'angular']),
-      flow: z.enum(['card_payment', 'enroll_card', 'saved_cards', 'payment_methods', 'safetypay_banks']),
+      flow: z.enum(['card_payment', 'enroll_card', 'saved_cards', 'payment_methods', 'safetypay_banks', 'apple_pay']),
       presentation_mode: z.enum(['embedded', 'redirect']),
     }),
   },
@@ -136,6 +143,25 @@ server.registerPrompt(
         content: {
           type: 'text',
           text: `Use the Tonder Web SDK integrator to add saved-card payments to this ${framework} project. Confirm secure_token source before implementation.`,
+        },
+      },
+    ],
+  })
+);
+
+server.registerPrompt(
+  'integrate-web-sdk-apple-pay',
+  {
+    description: 'Prompt for integrating the Tonder Web SDK Apple Pay button component.',
+    argsSchema: z.object({ framework: z.enum(['html', 'react', 'angular']) }),
+  },
+  ({ framework }) => ({
+    messages: [
+      {
+        role: 'user',
+        content: {
+          type: 'text',
+          text: `Use the Tonder Web SDK integrator to add the Apple Pay button to this ${framework} project. Apple Pay is a mountable component, not a pay() call: check isApplePayAvailable() before rendering, mount tonder.create('apple_pay_button', { payment }), read results from config.events.payment, and unmount on teardown. Call get_integration_recipe with flow apple_pay before editing.`,
         },
       },
     ],

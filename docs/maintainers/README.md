@@ -36,9 +36,24 @@ Edit source content here:
 | Integration skill | `skills/tonder-web-sdk-integrator/SKILL.md` |
 | MCP server source | `packages/tonder-mcp/src/` |
 | MCP documentation snapshot | `packages/tonder-mcp/docs/` |
+| Maintained integration recipes | `packages/tonder-mcp/docs/web-sdk/recipes/` |
 | Root marketplace docs | `README.md` |
 
 Do not edit generated skill copies inside plugin packages directly. They are overwritten by the sync script.
+
+### Maintained recipes
+
+Sections under `docs/web-sdk/<version>/sections/` are generated from the SDK README on every sync. Recipes are not: they are hand-written and mirror the demo portal.
+
+Recipes live in **one unversioned directory**, `packages/tonder-mcp/docs/web-sdk/recipes/`, and `npm run sync:docs` copies them into the generated snapshot. Edit them there.
+
+Never edit `docs/web-sdk/<version>/recipes/`. That copy is regenerated and pruned.
+
+Each generated `manifest.json` records where its recipes came from:
+
+```json
+"recipes_from": "docs/web-sdk/recipes"
+```
 
 ## Sync workflow
 
@@ -57,6 +72,18 @@ node scripts/sync-web-sdk-skill.mjs
 ```
 
 `npm run sync:docs` is mandatory. It reads the SDK version from the Web SDK `package.json` and writes docs to `packages/tonder-mcp/docs/web-sdk/<sdk-version>/`.
+
+It runs three steps in this order, and the order matters:
+
+1. Regenerate `README.md` and `sections/` from the fetched SDK README.
+2. Copy the maintained recipes from `docs/web-sdk/recipes/` into the new snapshot.
+3. Prune older snapshots, keeping only the newest one.
+
+Pruning is part of the sync script on purpose, so it can never run before a snapshot exists. Only the newest snapshot is kept because the MCP server only ever serves the newest one, and every snapshot is copied into both plugin packages. To keep more while debugging:
+
+```bash
+TONDER_DOCS_KEEP_VERSIONS=3 npm run sync:docs
+```
 
 Default sources:
 
@@ -155,6 +182,23 @@ python3 /Users/dave/.codex/skills/.system/plugin-creator/scripts/validate_plugin
 ```
 
 If your local Python environment does not have `PyYAML`, install it in your development environment or set `PYTHONPATH` to the local dependency directory used by your workstation.
+
+### Recipe identifier drift check
+
+`npm test` includes `src/__tests__/recipe-api-drift.test.ts`. Because recipes are hand-maintained, nothing else notices when the SDK renames or removes a public API name. The test extracts every SDK identifier the recipes use — `tonder.<method>(`, `create('<component>')`, and `on_<event>:` keys — and asserts each one still exists in the synced README snapshot.
+
+Source of truth is the committed README snapshot rather than a fetched `dist/index.d.ts`, so the check stays deterministic and offline. This repo already declares the public GitHub README the source of truth for these docs, and the snapshot covers every name the recipes actually use.
+
+| It catches | It does not catch |
+| --- | --- |
+| A method renamed, for example `enrollCard()` → `saveCard()` | Semantic drift: a name that still exists but whose behavior changed |
+| A method removed from the public API | A recipe treating `isApplePayAvailable()` as a boolean after it started returning `{ available, code, message }` |
+| A component literal renamed, for example `create('card_fields')` | A changed argument shape, required field, or return type |
+| An event key renamed or removed | Guidance that is merely out of date |
+
+**It catches renames and removals, not semantic drift.** After every sync, still read the README diff. A recipe can use every correct identifier and still be wrong.
+
+When the check fails, fix the recipe in `docs/web-sdk/recipes/`, not the generated copy.
 
 ## Merge checklist
 

@@ -5,7 +5,24 @@ import { withPublicDocsBoundary } from './security-policy.js';
 
 export type Sdk = 'web-sdk';
 export type Framework = 'html' | 'react' | 'angular';
-export type Flow = 'card_payment' | 'enroll_card' | 'saved_cards' | 'payment_methods' | 'safetypay_banks';
+export type Flow = 'card_payment' | 'enroll_card' | 'saved_cards' | 'payment_methods' | 'safetypay_banks' | 'apple_pay';
+
+export const FLOWS: readonly Flow[] = [
+  'card_payment',
+  'enroll_card',
+  'saved_cards',
+  'payment_methods',
+  'safetypay_banks',
+  'apple_pay',
+] as const;
+
+/**
+ * Flows whose guidance does not fit the shared `flows.md` shape get their own
+ * maintained recipe file, appended after the generic flow content.
+ */
+const FLOW_RECIPE_FILES: Partial<Record<Flow, string>> = {
+  apple_pay: 'apple-pay.md',
+};
 export type PresentationMode = 'embedded' | 'redirect';
 
 export interface ReferenceRequest {
@@ -92,6 +109,12 @@ function findSectionPath(topic: string, sdk: Sdk = 'web-sdk', version = defaultV
     saved_cards: ['saved-card-payments', 'saved-card', 'tonder-getcustomercards'],
     payment_methods: ['alternative-payment-methods', 'tonder-getpaymentmethods', 'payment-method-discovery'],
     safetypay_banks: ['tonder-getpaymentmethodbanks', 'payment-method-banks-safetypay'],
+    apple_pay: ['payment-flows', 'api-reference'],
+    apple_pay_button: ['api-reference', 'payment-flows'],
+    isApplePayAvailable: ['api-reference', 'payment-flows'],
+    isapplepayavailable: ['api-reference', 'payment-flows'],
+    lifecycle: ['core-concepts'],
+    unmount: ['core-concepts', 'api-reference'],
     errors: ['errors'],
     statuses: ['payment-statuses'],
     webhooks: ['webhooks'],
@@ -216,9 +239,15 @@ function getLifecycleRecipeText(version: string, framework: Framework) {
   return [genericLifecycle, frameworkLifecycle].filter(Boolean).join('\n');
 }
 
+function getFlowRecipeText(version: string, flow: Flow) {
+  const fileName = FLOW_RECIPE_FILES[flow];
+  return fileName ? getRecipeText(version, fileName) : '';
+}
+
 export function getIntegrationRecipe({ sdk = 'web-sdk', version = defaultVersion(sdk), framework, flow, presentation_mode }: RecipeRequest) {
   const frameworkContent = getRecipeText(version, `${framework}.md`);
-  const flowContent = getRecipeText(version, 'flows.md') || getSdkApiReference({ sdk, version, topic: flow }).content;
+  const genericFlowContent = getRecipeText(version, 'flows.md') || getSdkApiReference({ sdk, version, topic: flow }).content;
+  const flowContent = [genericFlowContent, getFlowRecipeText(version, flow)].filter(Boolean).join('\n\n');
   const content = [
     `# Tonder ${sdk} recipe: ${framework} + ${flow}`,
     `Presentation mode: ${presentation_mode}`,

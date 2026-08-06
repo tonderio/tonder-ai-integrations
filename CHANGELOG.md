@@ -2,6 +2,24 @@
 
 All notable changes to this repository are documented here.
 
+## Unreleased
+
+### Added
+
+- Apple Pay integration recipe, `apple_pay` flow in `get_integration_recipe`, and the `integrate-web-sdk-apple-pay` prompt.
+- Apple Pay guidance in the Web SDK integrator skill: availability check, merchant-supplied container, synchronous `payment` callback, event-based results, `unmount()` on teardown, and the domain-registration prerequisite.
+- Recipe identifier drift check in `npm test`. It asserts every SDK identifier used by the maintained recipes still exists in the synced README. It catches renames and removals, not semantic drift.
+- `recipes_from` in each generated `manifest.json`, recording where the snapshot's recipes came from.
+
+### Changed
+
+- Maintained recipes now live in one unversioned source, `packages/tonder-mcp/docs/web-sdk/recipes/`, and are copied into each generated snapshot instead of being inherited from the previous version.
+- `npm run sync:docs` prunes stale docs snapshots after generating the new one, keeping only the newest. Override with `TONDER_DOCS_KEEP_VERSIONS`.
+
+### Fixed
+
+- The MCP README resource URI is now resolved from the bundled snapshot instead of being hardcoded to `0.1.0`.
+
 ## 0.1.12 - 2026-07-17
 
 ### Changed

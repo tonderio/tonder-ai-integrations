@@ -27322,6 +27322,9 @@ ${content}`;
 }
 
 // src/docs-registry.ts
+var FLOW_RECIPE_FILES = {
+  apple_pay: "apple-pay.md"
+};
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = path.dirname(__filename);
 var packageRoot = path.resolve(__dirname, "..");
@@ -27376,6 +27379,12 @@ function findSectionPath(topic, sdk = "web-sdk", version2 = defaultVersion(sdk))
     saved_cards: ["saved-card-payments", "saved-card", "tonder-getcustomercards"],
     payment_methods: ["alternative-payment-methods", "tonder-getpaymentmethods", "payment-method-discovery"],
     safetypay_banks: ["tonder-getpaymentmethodbanks", "payment-method-banks-safetypay"],
+    apple_pay: ["payment-flows", "api-reference"],
+    apple_pay_button: ["api-reference", "payment-flows"],
+    isApplePayAvailable: ["api-reference", "payment-flows"],
+    isapplepayavailable: ["api-reference", "payment-flows"],
+    lifecycle: ["core-concepts"],
+    unmount: ["core-concepts", "api-reference"],
     errors: ["errors"],
     statuses: ["payment-statuses"],
     webhooks: ["webhooks"],
@@ -27485,9 +27494,14 @@ function getLifecycleRecipeText(version2, framework) {
   const frameworkLifecycle = getRecipeText(version2, `lifecycle-${framework}.md`);
   return [genericLifecycle, frameworkLifecycle].filter(Boolean).join("\n");
 }
+function getFlowRecipeText(version2, flow) {
+  const fileName = FLOW_RECIPE_FILES[flow];
+  return fileName ? getRecipeText(version2, fileName) : "";
+}
 function getIntegrationRecipe({ sdk = "web-sdk", version: version2 = defaultVersion(sdk), framework, flow, presentation_mode }) {
   const frameworkContent = getRecipeText(version2, `${framework}.md`);
-  const flowContent = getRecipeText(version2, "flows.md") || getSdkApiReference({ sdk, version: version2, topic: flow }).content;
+  const genericFlowContent = getRecipeText(version2, "flows.md") || getSdkApiReference({ sdk, version: version2, topic: flow }).content;
+  const flowContent = [genericFlowContent, getFlowRecipeText(version2, flow)].filter(Boolean).join("\n\n");
   const content = [
     `# Tonder ${sdk} recipe: ${framework} + ${flow}`,
     `Presentation mode: ${presentation_mode}`,
@@ -27510,9 +27524,14 @@ var server = new McpServer(
     instructions: "Use this server only for public Tonder Web SDK integration guidance. Do not infer or disclose private Tonder endpoints, headers, backend payloads, service names, credentials, source maps, or SDK internals."
   }
 );
+var resourceUris = listResourceUris();
+var readmeUri = resourceUris.find((value) => !value.includes("/sections/") && value.endsWith("/readme"));
+if (!readmeUri) {
+  throw new Error("No Web SDK README resource found in the bundled docs snapshot.");
+}
 server.registerResource(
   "tonder-web-sdk-readme",
-  "tonder://web-sdk/0.1.0/readme",
+  readmeUri,
   {
     title: "Tonder Web SDK README",
     description: "Full Tonder Web SDK README snapshot.",
@@ -27522,7 +27541,7 @@ server.registerResource(
     contents: [{ uri: uri.href, mimeType: "text/markdown", text: readResource(uri.href) }]
   })
 );
-for (const uri of listResourceUris().filter((value) => value.includes("/sections/"))) {
+for (const uri of resourceUris.filter((value) => value.includes("/sections/"))) {
   const name = uri.split("/").at(-1) ?? uri;
   server.registerResource(
     `tonder-web-sdk-${name}`,
@@ -27557,7 +27576,7 @@ server.registerTool(
       sdk: external_exports.literal("web-sdk").default("web-sdk"),
       version: external_exports.string().optional(),
       framework: external_exports.enum(["html", "react", "angular"]),
-      flow: external_exports.enum(["card_payment", "enroll_card", "saved_cards", "payment_methods", "safetypay_banks"]),
+      flow: external_exports.enum(["card_payment", "enroll_card", "saved_cards", "payment_methods", "safetypay_banks", "apple_pay"]),
       presentation_mode: external_exports.enum(["embedded", "redirect"])
     })
   },
@@ -27620,6 +27639,24 @@ server.registerPrompt(
         content: {
           type: "text",
           text: `Use the Tonder Web SDK integrator to add saved-card payments to this ${framework} project. Confirm secure_token source before implementation.`
+        }
+      }
+    ]
+  })
+);
+server.registerPrompt(
+  "integrate-web-sdk-apple-pay",
+  {
+    description: "Prompt for integrating the Tonder Web SDK Apple Pay button component.",
+    argsSchema: external_exports.object({ framework: external_exports.enum(["html", "react", "angular"]) })
+  },
+  ({ framework }) => ({
+    messages: [
+      {
+        role: "user",
+        content: {
+          type: "text",
+          text: `Use the Tonder Web SDK integrator to add the Apple Pay button to this ${framework} project. Apple Pay is a mountable component, not a pay() call: check isApplePayAvailable() before rendering, mount tonder.create('apple_pay_button', { payment }), read results from config.events.payment, and unmount on teardown. Call get_integration_recipe with flow apple_pay before editing.`
         }
       }
     ]
