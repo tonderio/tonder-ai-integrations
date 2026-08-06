@@ -2,16 +2,18 @@
 
 All notable changes to this repository are documented here.
 
-## Unreleased
+## 0.1.14 - 2026-08-06
 
 ### Changed
 
-- A plugin's version is now written in one place — `plugins[].version` in `.claude-plugin/marketplace.json` — and stamped into the Claude manifest, the Codex manifest, and the Codex marketplace `source.ref` by `scripts/sync-web-sdk-skill.mjs`. Releasing changes one number instead of five.
+- A plugin's version is written in one place — `plugins[].version` in `.claude-plugin/marketplace.json` — and stamped into the Claude manifest, the Codex manifest, and the Codex marketplace `source.ref` by `scripts/sync-web-sdk-skill.mjs`. Releasing changes one number instead of five.
 - The catalog's own `version` no longer tracks any plugin. It describes the catalog's shape and is bumped when a plugin is added, removed, or renamed.
+- Packaging reads which skills a plugin bundles from `plugin-packaging.json` instead of naming one skill and two target directories. Adding a plugin is data, not a script edit. A declared skill that does not exist fails the sync rather than shipping a plugin without it.
 
 ### Tests
 
-- A drift test fails when any derived version diverges from the catalog, naming the file and the mismatch. It closes a gap `claude plugin tag` cannot see: that check compares the Claude manifest against the catalog only, so a stale Codex `source.ref` used to pass validation and leave Codex users installing the previous release.
+- A version drift test fails when any derived version diverges from the catalog. It closes a gap `claude plugin tag` cannot see: that check compares the Claude manifest against the catalog only, so a stale Codex `source.ref` used to pass validation and leave Codex users installing the previous release.
+- A packaging test fails when a plugin's packaged skills or MCP payload are missing or drift from source.
 
 ## 0.1.13 - 2026-08-06
 
