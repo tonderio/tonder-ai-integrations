@@ -1,0 +1,16 @@
+{
+  "name": "vela-books-checkout",
+  "private": true,
+  "version": "1.4.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "tonder-web-sdk": "^2.4.1"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

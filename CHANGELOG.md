@@ -2,6 +2,14 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.18 - 2026-08-07
+
+### Fixed
+
+- The migration rule told the agent never to leave "the old server-to-server charge path active alongside the new integration". The Direct API guide says the opposite: its first slice ships Apple Pay while the merchant's existing `/process/` calls keep running untouched. A rule that contradicts the guide it points at is a rule that can tear out a working checkout, so it is now scoped to the legacy SDK — two payment SDKs on one page is still a defect — and says explicitly to follow the guide's pacing for a server-side integration.
+
+  Found by running the skill against a Node + HTML Direct API fixture. That agent read the guide and did the right thing anyway; the next one might not have.
+
 ## 0.1.17 - 2026-08-07
 
 ### Added

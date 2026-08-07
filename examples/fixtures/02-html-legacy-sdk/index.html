@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vela Books — Checkout</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="checkout">
+      <h1>Checkout</h1>
+
+      <section class="summary">
+        <span>Order VB-8871</span>
+        <strong id="total">MXN 320.00</strong>
+      </section>
+
+      <form id="checkout-form" novalidate>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" required />
+
+        <fieldset class="card">
+          <legend>Card</legend>
+          <div id="collect-cardholder-name" class="card-field"></div>
+          <div id="collect-card-number" class="card-field"></div>
+          <div class="card-row">
+            <div id="collect-expiration-month" class="card-field"></div>
+            <div id="collect-expiration-year" class="card-field"></div>
+            <div id="collect-cvv" class="card-field"></div>
+          </div>
+        </fieldset>
+
+        <button id="pay" type="submit">Pay</button>
+      </form>
+
+      <p id="status" class="status" role="status"></p>
+    </main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cumbre Coffee — Checkout</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="checkout">
+      <h1>Checkout</h1>
+
+      <section class="summary">
+        <span>Order VB-CART</span>
+        <strong>MXN 640.00</strong>
+      </section>
+
+      <form id="checkout-form" novalidate>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" required />
+
+        <label for="method">Payment method</label>
+        <select id="method" name="method">
+          <option value="CARD">Card</option>
+          <option value="SPEI">SPEI transfer</option>
+          <option value="OXXO">OXXO Pay</option>
+        </select>
+
+        <fieldset id="card-fields" class="card">
+          <legend>Card</legend>
+          <input id="cardholder-name" placeholder="Name on card" autocomplete="cc-name" />
+          <input id="card-number" placeholder="Card number" inputmode="numeric" autocomplete="cc-number" />
+          <div class="card-row">
+            <input id="expiration-month" placeholder="MM" inputmode="numeric" />
+            <input id="expiration-year" placeholder="YY" inputmode="numeric" />
+            <input id="cvv" placeholder="CVV" inputmode="numeric" autocomplete="cc-csc" />
+          </div>
+        </fieldset>
+
+        <button id="pay" type="submit">Pay</button>
+      </form>
+
+      <p id="status" class="status" role="status"></p>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

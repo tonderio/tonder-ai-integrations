@@ -39,7 +39,8 @@ If `tonder-docs` MCP is unavailable or does not return the required information,
 2. **Check whether the project already integrates Tonder.** Look for `tonder-web-sdk` in `package.json` or a script tag, `InlineCheckout` or `LiteInlineCheckout` in the code, or server-side calls that build a Tonder charge. If you find any of them this is a **migration**, not a new integration:
    - Call `get_migration_guide` with `from: 'legacy_sdk'` for `InlineCheckout`/`LiteInlineCheckout`, or `from: 'direct_api'` for a server-to-server integration, and follow it instead of `get_integration_recipe`.
    - Tell the user what you found and which guide you are following before editing.
-   - Never leave the old integration loaded next to the new one. Two payment SDKs on one page is a defect, not a transition step.
+   - Never leave the legacy SDK loaded next to the new one. Two payment SDKs on one page is a defect, not a transition step.
+   - A server-to-server Direct API integration is different: it is not a second SDK, and the guide defines an incremental path that adds the SDK while the existing charge calls keep running. Follow the guide's pacing. Do not tear out a working server-side checkout that the guide tells you to leave in place.
 3. Detect framework:
    - HTML/static page
    - React
@@ -151,7 +152,7 @@ When Apple Pay was integrated, the final response must list these, as merchant a
 - Never make an Apple Pay `payment` callback `async` or put `await` inside it.
 - Never block the integration on Apple Pay domain registration or on Apple Pay being enabled for the business. Both run in parallel with the code. Ask about them for the handoff notes, then keep working regardless of the answer.
 - Never write a placeholder Apple Pay verification file. The contents come from Tonder and are matched byte for byte; a made-up file fails verification and looks like it succeeded.
-- When the project already has a Tonder integration, call `get_migration_guide` and follow it instead of `get_integration_recipe`. Never leave the legacy SDK or the old server-to-server charge path active alongside the new integration.
+- When the project already has a Tonder integration, call `get_migration_guide` and follow it instead of `get_integration_recipe`. Never leave the legacy SDK loaded alongside the new one. A server-to-server Direct API integration is not a second SDK — remove or keep its charge calls at the pace the guide sets, and never rip out a working server-side checkout the guide tells you to leave running.
 - Read the Tonder public API key and SDK environment from the app's public environment/configuration system instead of hardcoding merchant values in components or scripts. Use framework-appropriate access: Vite uses `import.meta.env.VITE_*`, Next.js Client Components use `process.env.NEXT_PUBLIC_*`, Angular uses `environment.ts`/file replacements, and plain HTML uses merchant-provided public runtime config such as a server-rendered `window.__TONDER_CONFIG__`.
 - Do not force `currency` into environment variables; it is merchant checkout/business data unless the existing app already centralizes it in config.
 - Require `client_reference` for payments; it is the merchant order/reference used in dashboards, reports, webhooks, and transaction records.
