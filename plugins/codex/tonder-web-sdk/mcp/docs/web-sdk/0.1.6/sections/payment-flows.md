@@ -73,7 +73,24 @@ const enrollment = await tonder.enrollCard();
 
 ### Alternative payment methods
 
-Use `getPaymentMethods()` when you want to render the methods enabled for your business. This call is optional: if your checkout already knows which method it wants to offer, pass the method code directly to `pay()` (`{ type: 'spei' }`, `{ type: 'oxxopay' }`, etc.).
+Use `getPaymentMethods()` when you want to render the methods enabled for your business. This call is optional: if your checkout already knows which method it wants to offer, pass the method code directly to `pay()`.
+
+#### Method codes
+
+| Code                | Method             |
+| ------------------- | ------------------ |
+| `card`              | Credit/debit card  |
+| `saved_card`        | A stored card      |
+| `spei`              | SPEI transfer      |
+| `oxxopay`           | OXXO Pay           |
+| `mercadopago`       | Mercado Pago       |
+| `safetypaycash`     | SafetyPay cash     |
+| `safetypaytransfer` | SafetyPay transfer |
+| `neosurf`           | Neosurf            |
+
+**The code reaches Tonder exactly as you write it.** The SDK does not re-case it, so `spei` and `SPEI` both work and each is stored and echoed back in your webhook's `payment_method_type` as you sent it. Pick one spelling and keep it, or your own reports will show the same method under two names.
+
+`card` and `saved_card` are the exception: both are sent as `CARD`, because a stored card is a card charge with a token rather than a separate method.
 
 For bank-backed SafetyPay methods, use `getPaymentMethodBanks()` and build `payment_method.config` from the selected bank:
 
@@ -108,7 +125,7 @@ const transaction = await tonder.pay({
   return_url: 'https://yourstore.example/checkout/return',
   client_reference: 'order_1001',
   payment_method: {
-    type: 'safetypayCash',
+    type: 'safetypaycash',
     config: {
       country: bank.country, // e.g. 'Mexico'
       channel: bank.channel, // 'WP' for cash, 'OL' for transfer
@@ -126,9 +143,9 @@ Apple Pay works differently from every other method in this SDK: **the SDK rende
 
 `tonder.pay({ payment_method: { type: 'apple_pay' } })` is rejected on purpose — use the component below.
 
-#### Register your domain with Apple first
+#### Ask Tonder to register your domain first
 
-Apple will not let a page take an Apple Pay payment until the domain serving that page is registered with Apple under Tonder's merchant identifier. This is a one-time setup step per domain, and it is the most common reason a correct integration fails in production.
+Apple will not let a page take an Apple Pay payment until its domain has been registered. **Tonder does that registration for you** — you never contact Apple, and you do not need an Apple developer account. What you do is send Tonder your domains and host one file. It is a one-time step per domain, and skipping it is the most common reason a correct integration fails in production.
 
 It takes four steps, in this order:
 

@@ -10,7 +10,6 @@ Vite / React:
 const tonderPublicConfig = {
   api_key: import.meta.env.VITE_TONDER_PUBLIC_API_KEY,
   environment: import.meta.env.VITE_TONDER_ENVIRONMENT as
-    | 'sandbox'
     | 'stage'
     | 'production',
 };
@@ -22,7 +21,6 @@ Next.js Client Components:
 const tonderPublicConfig = {
   api_key: process.env.NEXT_PUBLIC_TONDER_PUBLIC_API_KEY,
   environment: process.env.NEXT_PUBLIC_TONDER_ENVIRONMENT as
-    | 'sandbox'
     | 'stage'
     | 'production',
 };

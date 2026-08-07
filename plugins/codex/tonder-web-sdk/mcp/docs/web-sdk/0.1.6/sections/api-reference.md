@@ -11,7 +11,7 @@ The returned instance carries no readable properties of its own. `JSON.stringify
 ```ts
 interface TonderConfig {
   api_key: string;
-  environment: 'sandbox' | 'stage' | 'production';
+  environment: 'stage' | 'production';
   session?: {
     customer?: {
       email: string;
@@ -389,12 +389,20 @@ await tonder.pay({
 
 Use `metadata` for non-sensitive merchant context that helps reconciliation and reports. You can send any JSON-safe fields your commerce system needs. These metadata keys have reporting meaning when present:
 
-| Metadata key     | Report usage                                                                                |
-| ---------------- | ------------------------------------------------------------------------------------------- |
-| `operation_date` | Business operation date/time for reporting and reconciliation.                              |
-| `customer_email` | Customer email shown in transaction reports; falls back to the customer email when omitted. |
-| `customer_id`    | Merchant customer identifier for report filtering and reconciliation.                       |
-| `business_user`  | Internal user, POS terminal, cashier, or automation that initiated the payment.             |
+| Metadata key     | Column in the report        | What it is                                                                                       |
+| ---------------- | --------------------------- | ------------------------------------------------------------------------------------------------ |
+| `order_id`       | **Business Transaction ID** | Your internal order identifier. See the note below — this one interacts with `client_reference`. |
+| `customer_id`    | Customer ID                 | Your internal customer identifier, for filtering and reconciliation.                             |
+| `customer_email` | Customer Email              | The shopper's email. Falls back to `session.customer.email` when omitted.                        |
+| `business_user`  | Business User               | Whoever initiated the payment: a POS terminal, a cashier, an automation.                         |
+| `operation_date` | Business time               | Your business operation date, for reporting in your own timezone.                                |
+
+**`metadata.order_id` wins over `client_reference` in reports.** Both identify your order, but they are not the same field and they do not merge:
+
+- `client_reference` is a first-class payment field. It travels in the transaction, appears in webhooks, and is required on every `pay()` call.
+- `metadata.order_id` is optional, and exists only for reporting. When present, it becomes the **Business Transaction ID** column; when absent, that column falls back to `client_reference`.
+
+So sending both is fine, and sending only `client_reference` is fine. What causes surprise is sending both with **different values** — your webhooks then correlate on one identifier and your exported reports on the other. Send the same value, or send only `client_reference`.
 
 ```ts
 await tonder.pay({
@@ -470,7 +478,7 @@ APM/SPEI responses may include settlement fields:
 | `MISSING_CUSTOMER`                                              | `session.customer` was not configured.                                                                                                                                    |
 | `SECURE_TOKEN_REQUIRED`                                         | `session.secure_token` was not configured, and this charge stores a card: `{ type: 'saved_card' }`, or `{ type: 'card' }` when Card on File is enabled for your business. |
 | `INVALID_PAYMENT_REQUEST`                                       | `amount`, `return_url`, or `payment_method` is invalid.                                                                                                                   |
-| `INVALID_APM_CONFIG`                                            | `safetypayCash` or `safetypayTransfer` is missing `config.country`, `config.channel`, or `config.bank_ids`.                                                               |
+| `INVALID_APM_CONFIG`                                            | `safetypaycash` or `safetypaytransfer` is missing `config.country`, `config.channel`, or `config.bank_ids`.                                                               |
 | `MOUNT_COLLECT_ERROR`                                           | Card fields cannot be collected.                                                                                                                                          |
 | `PAYMENT_PROCESS_ERROR`                                         | The payment request fails.                                                                                                                                                |
 | `FETCH_TRANSACTION_ERROR`                                       | Hosted/3DS resolution cannot retrieve the transaction.                                                                                                                    |
@@ -518,16 +526,16 @@ interface EnrollResult {
 
 #### Throws
 
-| Code                       | When                                        |
-| -------------------------- | ------------------------------------------- |
-| `NOT_INITIALIZED`          | `tonder.init()` has not completed.          |
-| `MISSING_CUSTOMER`         | `session.customer` was not configured.      |
-| `SECURE_TOKEN_REQUIRED`    | `session.secure_token` was not configured.  |
-| `MOUNT_COLLECT_ERROR`      | Card fields cannot be collected.            |
-| `CUSTOMER_OPERATION_ERROR` | Customer registration/fetch fails.          |
-| `SAVE_CARD_ERROR`          | Card save fails.                            |
-| `CARD_ON_FILE_DECLINED`    | Card-on-file enrollment is declined.        |
-| `ACQUIRER_LOAD_ERROR`      | Card-on-file processor library cannot load. |
+| Code                       | When                                                |
+| -------------------------- | --------------------------------------------------- |
+| `NOT_INITIALIZED`          | `tonder.init()` has not completed.                  |
+| `MISSING_CUSTOMER`         | `session.customer` was not configured.              |
+| `SECURE_TOKEN_REQUIRED`    | `session.secure_token` was not configured.          |
+| `MOUNT_COLLECT_ERROR`      | Card fields cannot be collected.                    |
+| `CUSTOMER_OPERATION_ERROR` | Customer registration/fetch fails.                  |
+| `SAVE_CARD_ERROR`          | Card save fails.                                    |
+| `CARD_ON_FILE_DECLINED`    | Card-on-file enrollment is declined.                |
+| `ACQUIRER_LOAD_ERROR`      | The Card-on-File processing library could not load. |
 
 ### `tonder.getCustomerCards()`
 

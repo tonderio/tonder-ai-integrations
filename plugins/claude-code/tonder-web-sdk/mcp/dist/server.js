@@ -27516,6 +27516,28 @@ function getIntegrationRecipe({ sdk = "web-sdk", version: version2 = defaultVers
   ].join("\n\n");
   return { sdk, version: version2, framework, flow, presentation_mode, content: withPublicDocsBoundary(content) };
 }
+function getMigrationGuide({
+  sdk = "web-sdk",
+  version: version2 = defaultVersion(sdk),
+  from
+}) {
+  const manifest = loadManifest(sdk, version2);
+  const entry = manifest.migrations?.[from];
+  if (!entry) {
+    const available = Object.keys(manifest.migrations ?? {}).join(", ") || "none";
+    throw new Error(
+      `No migration guide for '${from}' in ${sdk} ${version2}. Available: ${available}.`
+    );
+  }
+  return {
+    sdk,
+    version: version2,
+    from,
+    title: entry.title,
+    source_url: entry.source_url,
+    content: readText(path.join(docDir(sdk, version2), entry.path))
+  };
+}
 
 // src/server.ts
 var server = new McpServer(
@@ -27604,6 +27626,36 @@ server.registerTool(
     })
   },
   async (input) => ({ content: [{ type: "text", text: JSON.stringify(getPaymentStatusReference(input), null, 2) }] })
+);
+server.registerTool(
+  "get_migration_guide",
+  {
+    description: "Return the migration guide for a merchant who already integrates Tonder and is moving to the Web SDK. Call this INSTEAD of get_integration_recipe when the project already has a Tonder integration: 'direct_api' for a server-to-server Direct API merchant, 'legacy_sdk' for one on tonder-web-sdk v2 (InlineCheckout or LiteInlineCheckout). Does not expose private Tonder internals.",
+    inputSchema: external_exports.object({
+      sdk: external_exports.literal("web-sdk").default("web-sdk"),
+      version: external_exports.string().optional(),
+      from: external_exports.enum(["direct_api", "legacy_sdk"])
+    })
+  },
+  async (input) => ({ content: [{ type: "text", text: JSON.stringify(getMigrationGuide(input), null, 2) }] })
+);
+server.registerPrompt(
+  "migrate-to-web-sdk",
+  {
+    description: "Migrate an existing Tonder integration to the Web SDK.",
+    argsSchema: external_exports.object({ from: external_exports.enum(["direct_api", "legacy_sdk"]) })
+  },
+  ({ from }) => ({
+    messages: [
+      {
+        role: "user",
+        content: {
+          type: "text",
+          text: `Migrate this project from ${from === "direct_api" ? "server-to-server Direct API" : "the legacy Tonder SDK"} to the Tonder Web SDK. Call get_migration_guide with from '${from}' first and follow it. Inspect what the project actually has before changing anything, and never leave the old integration loaded alongside the new one.`
+        }
+      }
+    ]
+  })
 );
 server.registerPrompt(
   "integrate-web-sdk-card-payment",

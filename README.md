@@ -30,6 +30,13 @@ Supported flows:
 - SafetyPay banks
 - Apple Pay
 
+Apple Pay is additive — it sits alongside whichever flow above the merchant chose, rather than replacing it.
+
+Migrations are also supported. When a project already has a Tonder integration, the plugin recognizes it and follows the matching migration guide instead of a fresh-integration recipe:
+
+- Direct API (server-to-server) to Web SDK
+- Legacy checkout SDK (`InlineCheckout` / `LiteInlineCheckout`) to Web SDK
+
 ## Runtime requirement
 
 The bundled `tonder-docs` MCP server is a local `stdio` process. Claude Code and Codex start it with `node`, so users need **Node.js 20+ available in their PATH** for the MCP runtime to start.
@@ -167,14 +174,20 @@ Use Tonder Web SDK to add payment methods and SafetyPay bank selection to this H
 Use Tonder Web SDK to add the Apple Pay button to this React checkout.
 ```
 
+```text
+Use Tonder Web SDK to migrate this checkout off our server-to-server Tonder integration.
+```
+
 ## What the plugin does
 
 The plugin guides the agent to:
 
 - inspect the target project before editing;
+- recognize an existing Tonder integration and follow the matching migration guide instead of a fresh-integration recipe;
 - call the bundled `tonder-docs` MCP tools as the documentation source of truth;
 - choose the smallest working Web SDK integration for the detected framework;
 - keep merchant code from collecting raw PAN, CVV, or expiration data;
+- hand off the Apple Pay go-live steps — domains to register, the verification file, and where it goes in the project — without blocking the integration on them;
 - remind implementers about API keys, environment values, webhooks, production readiness, and backend reconciliation.
 
 ## Repository layout

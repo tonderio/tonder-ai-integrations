@@ -31,6 +31,14 @@ export interface ReferenceRequest {
   topic: string;
 }
 
+export type MigrationSource = 'direct_api' | 'legacy_sdk';
+
+export interface MigrationRequest {
+  sdk?: Sdk;
+  version?: string;
+  from: MigrationSource;
+}
+
 export interface RecipeRequest {
   sdk?: Sdk;
   version?: string;
@@ -87,6 +95,7 @@ function getRecipeText(version: string, fileName: string) {
 function loadManifest(sdk: Sdk = 'web-sdk', version = defaultVersion(sdk)) {
   return JSON.parse(readText(path.join(docDir(sdk, version), 'manifest.json'))) as {
     sections: Record<string, { title: string; path: string }>;
+    migrations?: Record<string, { title: string; path: string; source_url: string }>;
   };
 }
 
@@ -261,4 +270,35 @@ export function getIntegrationRecipe({ sdk = 'web-sdk', version = defaultVersion
     'Use the browser response for UX only. Fulfillment must be reconciled from the merchant backend using webhooks or server-side transaction lookup.',
   ].join('\n\n');
   return { sdk, version, framework, flow, presentation_mode, content: withPublicDocsBoundary(content) };
+}
+
+/**
+ * The migration guide for an integration the merchant already has.
+ *
+ * Served whole rather than sliced: a migration is a sequence, and handing an
+ * agent one step without the ones around it is how a half-migrated checkout
+ * gets shipped. The guides are written for merchants, so this is also what the
+ * agent can quote back to the developer.
+ */
+export function getMigrationGuide({
+  sdk = 'web-sdk',
+  version = defaultVersion(sdk),
+  from,
+}: MigrationRequest) {
+  const manifest = loadManifest(sdk, version);
+  const entry = manifest.migrations?.[from];
+  if (!entry) {
+    const available = Object.keys(manifest.migrations ?? {}).join(', ') || 'none';
+    throw new Error(
+      `No migration guide for '${from}' in ${sdk} ${version}. Available: ${available}.`,
+    );
+  }
+  return {
+    sdk,
+    version,
+    from,
+    title: entry.title,
+    source_url: entry.source_url,
+    content: readText(path.join(docDir(sdk, version), entry.path)),
+  };
 }

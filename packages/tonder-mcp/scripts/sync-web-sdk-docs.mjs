@@ -15,6 +15,29 @@ const packageJsonUrl = normalizeSourceUrl(
 const sourceUrl = normalizeSourceUrl(
   process.env.TONDER_WEB_SDK_README_URL || 'https://github.com/tonderio/web-sdk/blob/main/README.md',
 );
+
+/**
+ * Migration guides, keyed by the `from` value the MCP tool takes.
+ *
+ * They live in the SDK repo next to the README so one edit updates the guide a
+ * merchant reads on GitHub and the copy an agent is handed. Fetched here rather
+ * than copied into this repo for the same reason the README is: a second copy
+ * drifts, and nothing would catch it.
+ */
+const migrationGuides = {
+  direct_api: {
+    title: 'Migrating from Direct API to the Web SDK',
+    url: normalizeSourceUrl(
+      'https://github.com/tonderio/web-sdk/blob/main/docs/migration_direct_api_to_web_sdk.md',
+    ),
+  },
+  legacy_sdk: {
+    title: 'Migrating from the legacy SDK to the Web SDK',
+    url: normalizeSourceUrl(
+      'https://github.com/tonderio/web-sdk/blob/main/docs/migration_legacy_sdk_to_web_sdk.md',
+    ),
+  },
+};
 const sdkPackage = await readPackageJson();
 const version = process.env.TONDER_WEB_SDK_VERSION || sdkPackage.version;
 if (!version) {
@@ -153,6 +176,22 @@ if (existsSync(recipesSourceDir)) {
   console.log(`Copied maintained recipes from ${recipesFrom}`);
 }
 
+const migrationsDir = path.join(outDir, 'migrations');
+rmSync(migrationsDir, { recursive: true, force: true });
+mkdirSync(migrationsDir, { recursive: true });
+const manifestMigrations = {};
+for (const [key, guide] of Object.entries(migrationGuides)) {
+  const content = await fetchText(guide.url, 'text/markdown,text/plain;q=0.9,*/*;q=0.8');
+  const filename = `${key}.md`;
+  writeFileSync(path.join(migrationsDir, filename), content);
+  manifestMigrations[key] = {
+    title: guide.title,
+    path: `migrations/${filename}`,
+    source_url: guide.url,
+  };
+  console.log(`Synced migration guide '${key}' from ${guide.url}`);
+}
+
 const manifest = {
   sdk: 'web-sdk',
   version,
@@ -165,6 +204,7 @@ const manifest = {
   readme: 'README.md',
   recipes_from: recipesFrom,
   sections: manifestSections,
+  migrations: manifestMigrations,
 };
 writeFileSync(path.join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 console.log(`Synced Web SDK docs ${version} from ${source.source}`);

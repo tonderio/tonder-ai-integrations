@@ -1,6 +1,6 @@
 ---
 name: tonder-web-sdk-integrator
-description: Use when integrating the Tonder Web SDK into a merchant web project. Supports browser-based web apps including vanilla HTML, React, Next.js, Angular, and similar frameworks; card payments, card enrollment, saved cards, payment methods, SafetyPay banks, Apple Pay, embedded or redirect presentation, CDN or npm setup, and validation that raw card data is not handled by merchant code. Requires the bundled tonder-docs MCP server as the integration source of truth.
+description: Use when integrating the Tonder Web SDK into a merchant web project, or when migrating an existing Tonder integration to it from the Direct API or the legacy checkout SDK. Supports browser-based web apps including vanilla HTML, React, Next.js, Angular, and similar frameworks; card payments, card enrollment, saved cards, payment methods, SafetyPay banks, Apple Pay, embedded or redirect presentation, CDN or npm setup, and validation that raw card data is not handled by merchant code. Requires the bundled tonder-docs MCP server as the integration source of truth.
 ---
 
 # Tonder Web SDK Integrator
@@ -26,6 +26,7 @@ Use the bundled `tonder-docs` MCP server as the only documentation source for pu
 Before editing, call the MCP tools needed for the selected work:
 
 - `get_integration_recipe` for the selected framework, flow, and presentation mode.
+- `get_migration_guide` when the project already has a Tonder integration — `from: 'direct_api'` for a server-to-server integration, `from: 'legacy_sdk'` for `InlineCheckout`/`LiteInlineCheckout`. Use it instead of `get_integration_recipe`, not alongside it.
 - `get_sdk_api_reference` for method signatures, payloads, CDN/npm setup, and customization details.
 - `get_error_reference` when adding error handling or explaining SDK errors.
 - `get_payment_status_reference` when handling or explaining payment statuses.
@@ -35,37 +36,45 @@ If `tonder-docs` MCP is unavailable or does not return the required information,
 ## Workflow
 
 1. Inspect the project before asking questions.
-2. Detect framework:
+2. **Check whether the project already integrates Tonder.** Look for `tonder-web-sdk` in `package.json` or a script tag, `InlineCheckout` or `LiteInlineCheckout` in the code, or server-side calls that build a Tonder charge. If you find any of them this is a **migration**, not a new integration:
+   - Call `get_migration_guide` with `from: 'legacy_sdk'` for `InlineCheckout`/`LiteInlineCheckout`, or `from: 'direct_api'` for a server-to-server integration, and follow it instead of `get_integration_recipe`.
+   - Tell the user what you found and which guide you are following before editing.
+   - Never leave the old integration loaded next to the new one. Two payment SDKs on one page is a defect, not a transition step.
+3. Detect framework:
    - HTML/static page
    - React
    - Angular
    - If detection is ambiguous, ask the user to confirm.
-3. Confirm the target page/component before editing when the project has multiple plausible checkout pages, routes, or components. Stop and ask one question. Explain that this decides where the checkout UI and SDK lifecycle code will be added.
-4. Confirm the integration flow if the prompt does not specify one. Stop and ask one question. Explain the relevant choices briefly:
+4. Confirm the target page/component before editing when the project has multiple plausible checkout pages, routes, or components. Stop and ask one question. Explain that this decides where the checkout UI and SDK lifecycle code will be added.
+5. Confirm the integration flow if the prompt does not specify one. Stop and ask one question. Explain the relevant choices briefly:
    - card payment: shopper enters a new card in secure SDK fields and pays now.
    - enroll card: shopper saves a new card for future payments.
    - saved cards: shopper pays with an existing saved card, sometimes with CVV collection.
    - payment methods: shopper pays with an alternative method such as SPEI or OXXO Pay.
    - SafetyPay banks: shopper selects a SafetyPay bank for cash/transfer flows.
-   - Apple Pay: the SDK renders an Apple Pay button and owns the tap; there is no `pay()` call.
-5. Confirm presentation mode if the flow can require hosted authentication and the user did not specify it. Stop and ask one question before editing; do not choose a default. Explain both choices in the question. Apple Pay never uses hosted authentication, so do not ask for presentation mode when the selected flow is Apple Pay:
+6. **Ask whether to add the Apple Pay button as well**, unless the user already said so or already picked Apple Pay as the flow. Stop and ask one question. Apple Pay is **additive**, not an alternative: it sits next to the flow chosen above and most merchants want both. Explain that it renders an Apple Pay button for shoppers on supported Apple devices, that it does not change the flow already chosen, and that it needs a one-time domain setup with Tonder which can run in parallel with the integration.
+7. If Apple Pay was selected, ask its own questions one at a time, and do not block the integration on any of them:
+   - **Where the button goes** on the target page, relative to the other payment options.
+   - **Whether their domains are already registered with Tonder and Apple Pay is enabled for their business.** If not, tell them to send Tonder every domain and subdomain that will show the button and to start that now — it runs in parallel and you keep integrating either way. Never stop the work waiting for it.
+   - **Whether they want to customize the button** — `type`, `style`, `locale`, `width`, `height`, `border_radius`. If they do not, add no customization.
+8. Confirm presentation mode if the selected flow can require hosted authentication and the user did not specify it. Stop and ask one question before editing; do not choose a default. Explain both choices in the question. Apple Pay never uses hosted authentication, so do not ask for presentation mode when Apple Pay is the only thing being added:
    - `embedded`: Tonder opens the hosted authentication/checkout step in an SDK modal/iframe inside the merchant page.
    - `redirect`: the browser navigates to the hosted step and returns to the provided `return_url`.
-6. Confirm SDK loading strategy unless the user already specified it. Stop and ask one question before editing; do not choose a default for React/Angular/bundled apps. Explain both choices in the question. For a plain static HTML page, CDN may be inferred only when there is no package manager or bundler:
-   - `cdn`: add the Tonder browser script URL directly to the page; best for plain HTML or when the developer does not want a package dependency.
-   - `npm`: install/import the public SDK package through the app bundler; best for typed React/Angular projects once the public package is available.
+9. Confirm SDK loading strategy unless the user already specified it. Stop and ask one question before editing; do not choose a default for React/Angular/bundled apps. Explain both choices in the question. Both work in every framework, so do not present the CDN as a fallback for projects without a build step. For a plain static HTML page, CDN may be inferred only when there is no package manager or bundler:
+   - `cdn`: add the Tonder browser script URL directly to the page. The URL tracks a major-version channel, so fixes arrive without a release of the merchant's own.
+   - `npm`: install/import the public SDK package through the app bundler. Pinned to the version installed and upgraded deliberately.
    - If npm is unavailable or not published, use the documented CDN path instead; do not search for or install local SDK packages.
-7. If CDN is selected for a TypeScript project such as React or Angular, confirm the typing strategy unless the user already specified it. Stop and ask one question. Explain that CDN provides the runtime through `window.Tonder`, but TypeScript still needs a type declaration:
-   - type-only devDependency: install `@tonder.io/web-sdk` with `-D` and use `import type` only; runtime still comes from the CDN.
-   - local ambient declaration: add a minimal `window.Tonder` declaration without installing the npm package.
-   For plain HTML/JavaScript projects, skip this question.
-8. Ask whether the developer wants the default Tonder UX/configuration or custom SDK options, unless already specified. Stop and ask one question. Explain that defaults use Tonder-provided secure-field labels, placeholders, styles, validation messages, and basic presentation behavior; custom options can include secure-field labels/placeholders/error messages/styles, `events.presentation.on_open`, `events.presentation.on_close`, `idempotency_key`, metadata, card-field event callbacks, or custom container IDs. If they choose defaults, do not add customization code. If they choose custom options, ask for only the relevant details one at a time.
-9. After all required decisions are known, use `tonder-docs` MCP to load the selected recipe/API reference. Do not call `get_integration_recipe` with an assumed `presentation_mode`; for card or saved-card flows, the value must come from the user prompt or from a direct user answer.
-10. Implement only the selected flow and required UI/state.
-11. Validate that the integration does not collect raw card data in merchant code.
-12. Add minimal merchant-facing notes for backend reconciliation and webhooks.
-13. Run available typecheck/build/test commands when safe.
-14. Final response must include: changed files, validation run, documentation source used, and concise setup notes telling the developer to configure their Tonder public API key and SDK environment through the app's public environment/configuration system, use `client_reference` as the merchant order/reference shown in dashboards, reports, webhooks, and transaction records, keep the generated `idempotency_key` stable per checkout attempt to make retries safe, optionally pass non-sensitive `metadata` such as `customer_email`, `customer_id`, `business_user`, or `operation_date` when they want richer transaction reports, configure webhooks in the Tonder dashboard before fulfillment, and update environment/CDN values when moving from stage/sandbox to production. If CDN with type-only npm was selected, say that `@tonder.io/web-sdk` is a devDependency for TypeScript types only and the runtime still comes from the CDN. Always include a short reminder that Card on File, saved cards, list/remove cards, and card enrollment require a short-lived `secure_token` generated by the merchant backend and passed to the SDK, and that merchants should confirm with Tonder whether COF is enabled for their business. If an alert or temporary shopper message was added, explicitly say it is only the UI handoff point and the merchant should replace/adapt it to their checkout UX; it is not fulfillment authority.
+10. If CDN is selected for a TypeScript project such as React or Angular, confirm the typing strategy unless the user already specified it. Stop and ask one question. Explain that CDN provides the runtime through `window.Tonder`, but TypeScript still needs a type declaration:
+    - type-only devDependency: install `@tonder.io/web-sdk` with `-D` and use `import type` only; runtime still comes from the CDN.
+    - local ambient declaration: add a minimal `window.Tonder` declaration without installing the npm package.
+    For plain HTML/JavaScript projects, skip this question.
+11. Ask whether the developer wants the default Tonder UX/configuration or custom SDK options, unless already specified. Stop and ask one question. Explain that defaults use Tonder-provided secure-field labels, placeholders, styles, validation messages, and basic presentation behavior; custom options can include secure-field labels/placeholders/error messages/styles, `events.presentation.on_open`, `events.presentation.on_close`, `idempotency_key`, metadata, card-field event callbacks, or custom container IDs. If they choose defaults, do not add customization code. If they choose custom options, ask for only the relevant details one at a time.
+12. After all required decisions are known, use `tonder-docs` MCP to load the selected recipe/API reference. Do not call `get_integration_recipe` with an assumed `presentation_mode`; for card or saved-card flows, the value must come from the user prompt or from a direct user answer. When Apple Pay was also selected, call `get_integration_recipe` a second time with `flow: 'apple_pay'`.
+13. Implement only the selected flows and required UI/state.
+14. Validate that the integration does not collect raw card data in merchant code.
+15. Add minimal merchant-facing notes for backend reconciliation and webhooks.
+16. Run available typecheck/build/test commands when safe.
+17. Final response must include: changed files, validation run, documentation source used, and concise setup notes telling the developer to configure their Tonder public API key and SDK environment through the app's public environment/configuration system, use `client_reference` as the merchant order/reference shown in dashboards, reports, webhooks, and transaction records, keep the generated `idempotency_key` stable per checkout attempt to make retries safe, optionally pass non-sensitive `metadata` such as `customer_email`, `customer_id`, `business_user`, `operation_date`, or `order_id` when they want richer transaction reports, configure webhooks in the Tonder dashboard before fulfillment, and update environment/CDN values when moving from stage to production. If CDN with type-only npm was selected, say that `@tonder.io/web-sdk` is a devDependency for TypeScript types only and the runtime still comes from the CDN. Always include a short reminder that Card on File, saved cards, list/remove cards, and card enrollment require a short-lived `secure_token` generated by the merchant backend and passed to the SDK, and that merchants should confirm with Tonder whether COF is enabled for their business. If an alert or temporary shopper message was added, explicitly say it is only the UI handoff point and the merchant should replace/adapt it to their checkout UX; it is not fulfillment authority. **If Apple Pay was integrated, the final response must also include the Apple Pay go-live steps** — see the section below; without them the button works in development and fails in production.
 
 ## Required MCP usage by task
 
@@ -77,6 +86,7 @@ If `tonder-docs` MCP is unavailable or does not return the required information,
 | Payment methods | `get_integration_recipe`, `get_sdk_api_reference` for `getPaymentMethods` and `pay` |
 | SafetyPay banks | `get_integration_recipe`, `get_sdk_api_reference` for `getPaymentMethodBanks`, SafetyPay config, and `pay` |
 | Apple Pay | `get_integration_recipe` with `flow: 'apple_pay'`, `get_sdk_api_reference` for `isApplePayAvailable` and `apple_pay_button` |
+| Migration from an existing Tonder integration | `get_migration_guide` with `from: 'direct_api'` or `from: 'legacy_sdk'`, then `get_sdk_api_reference` for the methods the guide uses |
 | Error/status handling | `get_error_reference`, `get_payment_status_reference` |
 
 ## Apple Pay
@@ -90,9 +100,44 @@ Apple Pay is the one flow that is not a `pay()` call. It is a mountable componen
 | The payment function is synchronous | `payment` may be an object or a function. If it is a function it must be synchronous and free of `await`, because Apple requires the sheet to open in the same tick as the tap. Fetch any server-side data before the tap and read it from a variable inside the function. |
 | Results come through events | There is no promise to await. Handle `events.payment.on_completed`, `on_error`, and `on_cancel` from `createTonder()`. `on_completed` fires for declines too, so branch on `transaction.status`; `on_cancel` is not an error. |
 | Teardown is required | Call `button.unmount()` when the checkout view is destroyed. On a client-side route change an orphaned sheet can still be authorized and will charge with stale payment data. |
-| Domain registration is a prerequisite | Apple Pay on the Web requires the production domain to be registered and verified with Apple, and Apple Pay must be enabled for the business in Tonder. Neither is an SDK option. Tell the developer explicitly; this is the most likely production-only failure and it surfaces after the tap as a merchant-validation error on `on_error`, not as an availability code. |
+| Domain setup is required to go live, but never blocks the work | Apple Pay on the Web requires the domain to be registered and verified, and Apple Pay to be enabled for the business in Tonder. Neither is an SDK option, and neither is a reason to pause the integration — they run in parallel. This is the most likely production-only failure, so it belongs in the final response. See the sections below. |
 
 Do not offer Apple Pay through `getPaymentMethods()` results or `pay({ payment_method: { type: 'apple_pay' } })`. That call is rejected by design.
+
+### Domain setup, and how it interacts with the integration
+
+Apple will not let a page take an Apple Pay payment until its domain is registered. Tonder performs that registration — the merchant never contacts Apple and needs no Apple developer account. The merchant sends Tonder their domains, Tonder returns a verification file, the merchant hosts it, and Tonder finishes the verification.
+
+**This never blocks the integration.** The merchant, Tonder, and you can work in parallel: keep writing code while the domains are being sent and registered. Do not stop, do not ask the user to come back later, and do not make the domain answer a precondition for any code change.
+
+Two failures look different, and the developer should know both up front: an unregistered domain renders the button, opens the sheet, then closes it with `APPLE_PAY_VALIDATION_ERROR` on `on_error`; Apple Pay not enabled for the business means `isApplePayAvailable()` returns `APPLE_PAY_NOT_ENABLED` and no button ever renders.
+
+### Placing the verification file
+
+If the merchant already has the file from Tonder, place it yourself — this is ordinary repo work. It must be served over HTTPS at `https://<domain>/.well-known/<the exact filename Tonder sent>`, with no redirect and no authentication. Keep the filename and the bytes exactly as delivered; the contents are matched byte for byte.
+
+| Project type | Where the file goes |
+| ------------ | ------------------- |
+| Next.js, React, Vite, and other static-asset bundlers | `public/.well-known/` |
+| Angular | `src/assets/.well-known/`, plus an `assets` entry in `angular.json` so the dot-directory is copied into the build |
+| Plain HTML site | `.well-known/` at the web root |
+
+Then warn the developer about the two things that make a correct file fail:
+
+- **A single-page-app catch-all route answers `200` with `index.html` for unknown paths.** The URL looks healthy while serving the wrong bytes, so tell them to check the response **body**, not the status code, before telling Tonder the file is live.
+- **Some hosts do not serve dot-directories** and need explicit configuration. Apple fetches the file from the merchant's own server, so a WAF, CDN rule, or geo-block in front of the domain has to allow it through — Tonder is not in that request path.
+
+If the merchant does not have the file yet, do not invent one and do not create a placeholder. Say what the file is for and where you will put it once Tonder sends it.
+
+### Apple Pay go-live steps for the final response
+
+When Apple Pay was integrated, the final response must list these, as merchant action items:
+
+1. Send Tonder every domain and subdomain that will show the button — staging, production, and any preview or vanity domain each need their own registration.
+2. Confirm with Tonder that Apple Pay is enabled for the business; that is a separate step from registering a domain.
+3. Host the verification file Tonder sends at `/.well-known/` on each domain — say whether you already placed it and at which path, or that it is still pending.
+4. Open the file URL and verify the response body before telling Tonder it is live.
+5. Tell Tonder the file is live so it can complete the verification with Apple.
 
 ## Hard rules
 
@@ -104,6 +149,9 @@ Do not offer Apple Pay through `getPaymentMethods()` results or `pay({ payment_m
 - Never implement Apple Pay through `pay()`. Use `tonder.create('apple_pay_button', { payment })` plus `mount()`, gate it on `tonder.isApplePayAvailable().available`, read results from `events.payment`, and `unmount()` on teardown.
 - Never treat `isApplePayAvailable()` as a boolean. Read the `available` property.
 - Never make an Apple Pay `payment` callback `async` or put `await` inside it.
+- Never block the integration on Apple Pay domain registration or on Apple Pay being enabled for the business. Both run in parallel with the code. Ask about them for the handoff notes, then keep working regardless of the answer.
+- Never write a placeholder Apple Pay verification file. The contents come from Tonder and are matched byte for byte; a made-up file fails verification and looks like it succeeded.
+- When the project already has a Tonder integration, call `get_migration_guide` and follow it instead of `get_integration_recipe`. Never leave the legacy SDK or the old server-to-server charge path active alongside the new integration.
 - Read the Tonder public API key and SDK environment from the app's public environment/configuration system instead of hardcoding merchant values in components or scripts. Use framework-appropriate access: Vite uses `import.meta.env.VITE_*`, Next.js Client Components use `process.env.NEXT_PUBLIC_*`, Angular uses `environment.ts`/file replacements, and plain HTML uses merchant-provided public runtime config such as a server-rendered `window.__TONDER_CONFIG__`.
 - Do not force `currency` into environment variables; it is merchant checkout/business data unless the existing app already centralizes it in config.
 - Require `client_reference` for payments; it is the merchant order/reference used in dashboards, reports, webhooks, and transaction records.

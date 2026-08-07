@@ -8,4 +8,4 @@ npm install @tonder.io/web-sdk
 import { createTonder, AppError, ErrorKeyEnum } from '@tonder.io/web-sdk';
 ```
 
-No bundler? Use the browser global build. See [CDN build](#cdn-build).
+Or load it from the CDN as a browser global — see [CDN build](#cdn-build). Both work in every framework; the CDN tracks a major-version channel, npm is pinned to the version you install.

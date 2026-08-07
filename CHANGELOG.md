@@ -2,6 +2,20 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.17 - 2026-08-07
+
+### Added
+
+- `get_migration_guide` tool and a `migrate-to-web-sdk` prompt. The MCP now bundles the two merchant migration guides from the SDK repo — Direct API to Web SDK, and legacy checkout SDK to Web SDK — and serves each one whole, because a migration guide read in fragments is how a half-migrated checkout happens.
+- The skill now detects an existing Tonder integration before it writes anything. `tonder-web-sdk` in `package.json`, `InlineCheckout`/`LiteInlineCheckout` in the code, or a server-to-server charge call means the work is a migration, and the agent loads the migration guide instead of the integration recipe. It is also told never to leave the old integration loaded next to the new one — two payment SDKs on one page is a defect, not a transition step.
+
+### Changed
+
+- Apple Pay is now offered as an **additive** step, not as one of six mutually exclusive flows. It sits next to whichever flow the merchant picked, which is what merchants actually ship; the previous wording meant an agent that chose card payments never raised Apple Pay at all.
+- Apple Pay now has its own questions — button placement, domain registration status, and button customization — and none of them block. Domain registration runs at the merchant's and Tonder's pace, in parallel with the code, so the agent asks, notes the answer, and keeps integrating.
+- The final-response contract now requires the Apple Pay go-live handoff when Apple Pay was integrated: send every domain and subdomain, confirm Apple Pay is enabled for the business, host the verification file, check the response **body** before declaring it live, and tell Tonder. Without those steps the button works in development and fails in production, which is the failure this handoff exists to prevent.
+- The agent now places the verification file itself when the merchant already has it — `public/.well-known/` for Next.js/React/Vite, `src/assets/.well-known/` plus the `angular.json` entry for Angular, the web root for a plain HTML site — and warns that a single-page-app catch-all answers `200` with `index.html`, so a wrong file looks like a healthy URL. It is explicitly forbidden from inventing a placeholder file: the contents are matched byte for byte, so a made-up one fails verification while looking like it succeeded.
+
 ## 0.1.16 - 2026-08-06
 
 ### Changed

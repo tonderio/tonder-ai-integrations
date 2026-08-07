@@ -47,7 +47,7 @@ const tonder = createTonder({
 | Field                            | Required                               | Description                                                                                                    |
 | -------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `api_key`                        | Yes                                    | Public Tonder key for browser integrations.                                                                    |
-| `environment`                    | Yes                                    | `'sandbox'`, `'stage'`, or `'production'`.                                                                     |
+| `environment`                    | Yes                                    | `'stage'` for testing, `'production'` when you go live.                                                        |
 | `session.customer`               | For `pay()` and saved-card operations  | Customer identity. Omit for read-only return pages that only call `getTransaction()`.                          |
 | `session.secure_token`           | For saved-card/Card-on-File operations | Short-lived token minted by your backend. See [Backend secure token endpoint](#backend-secure-token-endpoint). |
 | `presentation_mode`              | No                                     | `'redirect'` by default, or `'embedded'` for SDK-owned modal presentation.                                     |

@@ -58,6 +58,6 @@ node scripts/sync-plugin-packages.mjs
 
 ## Bundled MCP
 
-This plugin includes a local stdio MCP server named `tonder-docs`. The MCP serves versioned Web SDK documentation snapshots, integration recipes, errors, payment statuses, and prompts. It runs locally with Node.js and does not open a localhost port.
+This plugin includes a local stdio MCP server named `tonder-docs`. The MCP serves versioned Web SDK documentation snapshots, integration recipes, migration guides, errors, payment statuses, and prompts. It runs locally with Node.js and does not open a localhost port.
 
 The MCP server path is resolved with `${CLAUDE_PLUGIN_ROOT}/mcp/dist/server.js` so the plugin remains self-contained when installed from a marketplace or loaded with `--plugin-dir`.

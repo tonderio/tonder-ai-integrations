@@ -52,9 +52,9 @@ If the package metadata or README URL is unavailable, the sync command fails so 
 
 ## Exposed MCP capabilities
 
-- Resources: full README and section-level docs.
-- Tools: `get_integration_recipe`, `get_sdk_api_reference`, `get_error_reference`, `get_payment_status_reference`.
-- Prompts: `integrate-web-sdk-card-payment`, `integrate-web-sdk-saved-cards`.
+- Resources: full README, section-level docs, and the merchant migration guides.
+- Tools: `get_integration_recipe`, `get_migration_guide`, `get_sdk_api_reference`, `get_error_reference`, `get_payment_status_reference`.
+- Prompts: `integrate-web-sdk-card-payment`, `integrate-web-sdk-saved-cards`, `migrate-to-web-sdk`.
 
 ## Boundaries
 

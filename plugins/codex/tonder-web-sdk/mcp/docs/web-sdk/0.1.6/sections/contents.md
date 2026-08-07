@@ -22,7 +22,7 @@
   - [Save a new card](#save-a-new-card)
   - [Alternative payment methods](#alternative-payment-methods)
   - [Apple Pay](#apple-pay)
-    - [Register your domain with Apple first](#register-your-domain-with-apple-first)
+    - [Ask Tonder to register your domain first](#ask-tonder-to-register-your-domain-first)
 - [API reference](#api-reference)
   - [`createTonder(config)`](#createtonderconfig)
   - [`tonder.init()`](#tonderinit)

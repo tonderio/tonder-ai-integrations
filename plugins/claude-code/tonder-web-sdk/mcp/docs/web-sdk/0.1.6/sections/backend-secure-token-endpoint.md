@@ -35,10 +35,10 @@ app.post('/api/tonder/secure-token', async (_req, res) => {
 
 Use the matching Tonder API host for your environment:
 
-| SDK environment      | Backend token URL                           |
-| -------------------- | ------------------------------------------- |
-| `sandbox` or `stage` | `https://stage.tonder.io/api/secure-token/` |
-| `production`         | `https://app.tonder.io/api/secure-token/`   |
+| SDK environment | Backend token URL                           |
+| --------------- | ------------------------------------------- |
+| `stage`         | `https://stage.tonder.io/api/secure-token/` |
+| `production`    | `https://app.tonder.io/api/secure-token/`   |
 
 Then pass the value returned by your backend to the SDK:
 

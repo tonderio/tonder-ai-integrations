@@ -5,8 +5,8 @@
   "package_json_url": "https://raw.githubusercontent.com/tonderio/web-sdk/main/package.json",
   "source": "https://raw.githubusercontent.com/tonderio/web-sdk/main/README.md",
   "source_url": "https://raw.githubusercontent.com/tonderio/web-sdk/main/README.md",
-  "sha256": "2ea9830623964702ed2f9e9e3e87be4edf33181ddd5e6fa09c0d3cb4a3aafa7b",
-  "generated_at": "2026-08-07T03:01:52.539Z",
+  "sha256": "eb3cb4914d829f5d2b0e65392ae6fcc4ab52300b7e1508298255427a0e011186",
+  "generated_at": "2026-08-07T21:13:31.735Z",
   "readme": "README.md",
   "recipes_from": "docs/web-sdk/recipes",
   "sections": {
@@ -73,6 +73,18 @@
     "cdn-build": {
       "title": "CDN build",
       "path": "sections/cdn-build.md"
+    }
+  },
+  "migrations": {
+    "direct_api": {
+      "title": "Migrating from Direct API to the Web SDK",
+      "path": "migrations/direct_api.md",
+      "source_url": "https://raw.githubusercontent.com/tonderio/web-sdk/main/docs/migration_direct_api_to_web_sdk.md"
+    },
+    "legacy_sdk": {
+      "title": "Migrating from the legacy SDK to the Web SDK",
+      "path": "migrations/legacy_sdk.md",
+      "source_url": "https://raw.githubusercontent.com/tonderio/web-sdk/main/docs/migration_legacy_sdk_to_web_sdk.md"
     }
   }
 }
