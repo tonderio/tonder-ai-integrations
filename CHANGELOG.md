@@ -2,6 +2,18 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.20 - 2026-08-07
+
+### Added
+
+- A contract for retiring server-side code after a Direct API migration. The skill used to leave this undefined, which meant an agent either deleted working charge endpoints or said nothing about them at all. Neither is right.
+
+  It now states up front — as a statement, not a question — that the existing server path keeps running, and closes with a three-part offer: the endpoints the SDK actually replaced, named individually; what has to stay and why; and an offer to remove the rest once the merchant has confirmed the new path in production. Asking at the start is the wrong time, because the honest answer is not knowable until real money has moved through the new path.
+
+  The "what has to stay" part is the one that matters. The SDK's public surface is `init`, `pay`, `create`, `getTransaction`, `getPaymentMethods`, `getPaymentMethodBanks`, `enrollCard`, `getCustomerCards`, `removeCustomerCard`, and `isApplePayAvailable`. **There is no withdrawal method, deliberately** — the SDK's own polling module says withdrawal vocabulary does not belong in it. Webhooks, reconciliation, and refunds stay server-side too. A blanket "should I remove your Direct API integration?" hides all of that, and a merchant answering yes is answering a question that should not have been asked.
+
+  Three fixtures were added to verify it, each run against a clean agent: a React `LiteInlineCheckout` project with cards, saved cards and enrollment; an Angular `InlineCheckout` project whose hand-rolled 3DS service was deleted rather than ported; and an Express server whose seller withdrawals survived a full migration to the SDK with Apple Pay.
+
 ## 0.1.19 - 2026-08-07
 
 ### Fixed

@@ -1,6 +1,6 @@
 # Integration fixtures
 
-Three checkout projects used to exercise the `tonder-web-sdk-integrator` skill end to end. Each one is a starting state, not a finished integration — the point is what the skill does to it.
+Seven checkout projects used to exercise the `tonder-web-sdk-integrator` skill end to end. Each one is a starting state, not a finished integration — the point is what the skill does to it.
 
 | Fixture | Starting state | What it exercises |
 | ------- | -------------- | ----------------- |
@@ -8,6 +8,9 @@ Three checkout projects used to exercise the `tonder-web-sdk-integrator` skill e
 | `02-html-legacy-sdk` | `LiteInlineCheckout` wired up for card payments | Migration detection from the legacy SDK, and the fact that adding Apple Pay forces the migration |
 | `03-direct-api-node` | Node server posting to the Direct API for card, SPEI, and OXXO | Migration detection from a server-to-server integration, and the guide's incremental path that adds Apple Pay without touching the existing charge calls |
 | `04-angular-apple-pay` | Angular checkout with Apple Pay wired up, and the domain verification file dumped in the project root | Placing the verification file: `src/assets/.well-known/` plus the `angular.json` entry, because Angular does not copy dot-directories on its own |
+| `05-lite-legacy-react` | React + TypeScript on `LiteInlineCheckout`: card payment, saved cards with removal, and enrollment | Migrating every flow at once, with `tsc` proving the result against the real SDK types |
+| `06-full-legacy-angular` | Angular on `InlineCheckout` with APMs and a hand-rolled 3DS service that calls `verify3dsTransaction()` and polls a backend mirror | Whether the whole 3DS apparatus is deleted rather than ported — the new SDK resolves 3DS itself |
+| `07-direct-api-withdrawals` | Express server with card charges, APMs, seller withdrawals, and a shared webhook handler | Whether withdrawals survive. The SDK has no withdrawal method, so a blanket "remove the Direct API code" is wrong — and whether the removal offer arrives at the end, conditioned on cutover, instead of as a question up front |
 
 `04-angular-apple-pay` ships a fake `apple-developer-merchantid-domain-association.txt`. Its contents are nonsense on purpose — the test is whether the file is moved and wired into the build byte-for-byte, not what it says. Verify with a real build that it lands at `dist/<app>/browser/.well-known/`, not under `/assets/`.
 

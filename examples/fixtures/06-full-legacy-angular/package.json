@@ -1,0 +1,21 @@
+{
+  "name": "pico-trek-checkout",
+  "private": true,
+  "version": "5.0.2",
+  "scripts": {
+    "start": "ng serve",
+    "build": "ng build",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+  },
+  "dependencies": {
+    "@angular/common": "^18.2.0",
+    "@angular/core": "^18.2.0",
+    "@angular/platform-browser": "^18.2.0",
+    "tonder-web-sdk": "^2.4.1"
+  },
+  "devDependencies": {
+    "@angular/cli": "^18.2.0",
+    "@angular-devkit/build-angular": "^18.2.0",
+    "typescript": "~5.5.0"
+  }
+}
