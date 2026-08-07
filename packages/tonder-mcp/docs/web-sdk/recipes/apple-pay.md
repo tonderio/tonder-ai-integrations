@@ -49,7 +49,24 @@ The SDK mounts into a merchant-supplied container. The default selector is `#ton
 <div id="tonder-apple-pay-button"></div>
 ```
 
-Do not render merchant-owned button markup, label text, or icons inside the container. The SDK renders the Apple-compliant button. Merchant CSS may control layout around the container only. Style the button itself through `customization.apple_pay_button` on `createTonder()`.
+Do not render merchant-owned button markup, label text, or icons inside the container. The SDK renders the Apple-compliant button. Merchant CSS may control layout around the container only.
+
+Style the button through `customization.apple_pay_button` on `createTonder()`. These six fields are the whole surface — Apple permits four changes (call to action, color, size, corner radius) plus the label's language, and Safari draws the control natively, so any other CSS property is dropped without an error:
+
+```ts
+customization: {
+  apple_pay_button: {
+    type: 'check-out',        // buy | donate | plain | set-up | book | check-out |
+                              // subscribe | add-money | contribute | order | reload |
+                              // rent | support | tip | top-up | continue
+    style: 'black',           // black | white | white-outline
+    locale: 'es-MX',          // BCP 47; omit to inherit the page language
+    width: '100%',            // min 100pt for `plain`, 140pt otherwise
+    height: '48px',           // min 30pt
+    border_radius: '8px',     // single value; Apple's default is 4pt
+  },
+}
+```
 
 ## Payment data: object or synchronous function
 

@@ -20,16 +20,16 @@ const transaction = await tonder.getTransaction('txn_123');
 
 ### Card on File (COF)
 
-Card on File (COF) lets a business save a shopper's card and charge it later through a processor-backed subscription/authorization. Ask the Tonder team whether COF is enabled for your business before building saved-card flows.
+**Read `subscription_id` on every saved card before charging it.** It decides whether you need to collect a CVV:
 
-When COF is enabled, saved cards may include `subscription_id`. Cards with `subscription_id` can be charged directly as saved cards. Cards without `subscription_id` require CVV collection so the SDK can save/update the card and create the subscription before processing the payment. In both saved-card cases, `pay({ payment_method: { type: 'saved_card' } })` still needs `session.secure_token` because the SDK must read the customer's saved-card record before deciding which path to use.
+| `subscription_id` | What to do before `pay()`                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| present           | Nothing. Charge the card directly.                                                                |
+| `null`            | Mount the saved-card CVV field. The SDK uses it to create the subscription as part of the charge. |
 
-Because those operations create, list, update, or remove stored card records, they require both:
+Card on File is what makes that field appear: it lets a business store a shopper's card and charge it later through a processor-backed subscription. Ask the Tonder team whether it is enabled for your business before building saved-card flows — when it is off, `subscription_id` is always `null`.
 
-- `session.customer`
-- `session.secure_token`
-
-For new-card payments, `session.secure_token` is only required when the SDK must perform Card-on-File setup as part of the payment flow. Plain one-time new-card payments do not require it.
+Which operations need `session.secure_token`, and why, is listed once in [Backend secure token endpoint](#backend-secure-token-endpoint).
 
 ### Presentation mode
 

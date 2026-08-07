@@ -1,24 +1,92 @@
 ## Types
 
-Useful exports:
+Every type below is exported from the package root.
+
+Configuration and session:
 
 ```ts
 import type {
   TonderConfig,
-  PayInput,
-  RawTransaction,
+  TonderSession,
+  TonderMode,
   Customer,
-  Card,
-  EnrollResult,
+  BillingAddress,
+  TonderEvents,
+  PresentationEvents,
+  PaymentEvents,
+} from '@tonder.io/web-sdk';
+```
+
+Payments and transactions:
+
+```ts
+import type {
+  PayInput,
+  PaymentMethod,
+  RawTransaction,
+  BackendNextAction,
   PaymentMethodInfo,
   PaymentMethodBank,
   PaymentMethodBanks,
-  CardFieldsOptions,
-  CardFieldsComponent,
-  TonderEvents,
-  PresentationEvents,
 } from '@tonder.io/web-sdk';
 ```
+
+Cards:
+
+```ts
+import type {
+  Card,
+  EnrollResult,
+  CardFieldsOptions,
+  CardFieldsComponent,
+  CardField,
+  CardFieldState,
+  CardFieldEvents,
+  RevealCardFieldsInput,
+  RevealableCardField,
+} from '@tonder.io/web-sdk';
+```
+
+Apple Pay:
+
+```ts
+import type {
+  ApplePayAvailability,
+  ApplePayButtonOptions,
+  ApplePayButtonComponent,
+  ApplePayPaymentInput,
+} from '@tonder.io/web-sdk';
+```
+
+Components and customization:
+
+```ts
+import type {
+  TonderMountableComponent,
+  TonderComponent,
+  TonderComponentType,
+  TonderCustomization,
+  CardFieldsCustomization,
+  ApplePayButtonCustomization,
+  CardLabels,
+  CardPlaceholders,
+  CardStyles,
+  CardFieldErrorMessages,
+  FieldStyles,
+  CollectInputStyles,
+  LabelStyles,
+  ErrorTextStyles,
+} from '@tonder.io/web-sdk';
+```
+
+Errors:
+
+```ts
+import { AppError, ErrorKeyEnum } from '@tonder.io/web-sdk';
+import type { AppErrorInput } from '@tonder.io/web-sdk';
+```
+
+`TonderMountableComponent` is the shared shape of anything `tonder.create(...)` returns — both `card_fields` and `apple_pay_button` — so it is the type to reach for when a variable holds either. See [Mount and unmount inside a component](#mount-and-unmount-inside-a-component).
 
 If you load the SDK runtime from the CDN in a TypeScript app, you can still install `@tonder.io/web-sdk` as a devDependency for types only. See [CDN with TypeScript types](#cdn-with-typescript-types).
 

@@ -23,6 +23,11 @@ interface TonderConfig {
   };
   presentation_mode?: 'redirect' | 'embedded';
   events?: {
+    payment?: {
+      on_completed?(transaction: RawTransaction): void;
+      on_error?(error: AppError): void;
+      on_cancel?(): void;
+    };
     presentation?: {
       on_open?(): void;
       on_close?(): void;
@@ -31,6 +36,8 @@ interface TonderConfig {
   customization?: TonderCustomization;
 }
 ```
+
+`events.payment` fires for every payment method, `pay()` included — see [Events](#events).
 
 #### Response
 
@@ -122,98 +129,6 @@ interface CardFieldsComponent {
 | ------------------------ | ------------------------------------------ |
 | `INVALID_COMPONENT_TYPE` | The first argument is not `'card_fields'`. |
 
-### `tonder.isApplePayAvailable()`
-
-Tells you whether to render the Apple Pay container, and why not when you should not. Synchronous, makes no network call, and never throws — including before `init()`.
-
-#### Response
-
-```ts
-type ApplePayAvailability =
-  | { available: true }
-  | { available: false; code: string; message: string };
-```
-
-`available` is the discriminant: check it first and TypeScript narrows `code` and `message` into existence.
-
-| `code`                          | Meaning                                     |
-| ------------------------------- | ------------------------------------------- |
-| `NOT_INITIALIZED`               | `init()` has not finished yet.              |
-| `APPLE_PAY_UNSUPPORTED_BROWSER` | This browser cannot run Apple Pay.          |
-| `APPLE_PAY_NOT_ENABLED`         | Apple Pay is not enabled for your business. |
-
-The codes and messages are the same ones `mount()` throws for the same conditions, and when more than one applies you get the one `mount()` would report first — in the order listed above.
-
-#### What `available: true` does and does not promise
-
-It means the browser exposes Apple Pay **and** your business has it enabled. It does **not** promise the payment sheet will open: no synchronous check can. In the iOS Simulator, for example, the browser reports it can make payments, the button renders, and Apple dismisses the sheet the moment it is tapped. Treat `true` as "render the button" and handle what happens after the tap through `config.events.payment`.
-
-```ts
-const availability = tonder.isApplePayAvailable();
-
-if (availability.available) {
-  await tonder.create('apple_pay_button', { payment }).mount();
-} else {
-  console.info('Apple Pay hidden:', availability.code, availability.message);
-}
-```
-
-### `tonder.create('apple_pay_button', options)`
-
-Creates the Apple Pay button component. The SDK renders the button and handles the click; call `mount()` to render it. Results arrive on `config.events.payment`, not as a return value.
-
-#### Request
-
-```ts
-interface ApplePayButtonOptions {
-  /** Container selector. Defaults to '#tonder-apple-pay-button'. */
-  container_id?: string;
-  /**
-   * Payment data for the charge. Pass an object for a fixed amount, or a
-   * SYNCHRONOUS function for a cart that can change after mount.
-   */
-  payment: ApplePayPaymentInput | (() => ApplePayPaymentInput);
-}
-```
-
-`ApplePayPaymentInput` accepts `amount`, `currency`, `return_url`, `client_reference`, `metadata`, `billing_address` and `idempotency_key` — every field `pay()` takes, and each one is sent on the charge. The single field it does not accept is `payment_method`, because the button already is one.
-
-Style the button through `customization.apple_pay_button` on `createTonder()`.
-
-#### Response
-
-```ts
-interface ApplePayButtonComponent {
-  mount(): Promise<void>;
-  unmount(): void;
-}
-```
-
-#### Throws
-
-| Code                      | When                          |
-| ------------------------- | ----------------------------- |
-| `INVALID_PAYMENT_REQUEST` | `options.payment` is missing. |
-
-### `apple_pay_button.mount()`
-
-Renders the Apple Pay button into `container_id`. Calling it again replaces the rendered button.
-
-#### Throws
-
-| Code                            | When                                           |
-| ------------------------------- | ---------------------------------------------- |
-| `NOT_INITIALIZED`               | `init()` has not completed.                    |
-| `APPLE_PAY_UNSUPPORTED_BROWSER` | This browser cannot run Apple Pay.             |
-| `APPLE_PAY_NOT_ENABLED`         | Apple Pay is not enabled for your business.    |
-| `APPLE_PAY_CONTAINER_NOT_FOUND` | No element on the page matches `container_id`. |
-
-### `apple_pay_button.unmount()`
-
-Removes the button and dismisses the payment sheet if one is open. Safe to call more than once.
-
-Skip it on a client-side route change and the open sheet can still be authorized, charging with the payment data captured before you navigated away — see [Component lifecycle](#component-lifecycle).
-
 ### `card_fields.mount()`
 
 Mounts secure card fields into the configured containers.
@@ -302,6 +217,98 @@ Promise<void>;
 | `SECURE_FIELDS_LOAD_ERROR` | Secure card fields could not load in the browser.                            |
 | `VAULT_TOKEN_ERROR`        | Tonder could not prepare the secure card fields session.                     |
 | `INVALID_VAULT_TOKEN`      | Tonder returned an invalid secure card fields session.                       |
+
+### `tonder.isApplePayAvailable()`
+
+Tells you whether to render the Apple Pay container, and why not when you should not. Synchronous, makes no network call, and never throws — including before `init()`.
+
+#### Response
+
+```ts
+type ApplePayAvailability =
+  | { available: true }
+  | { available: false; code: string; message: string };
+```
+
+`available` is the discriminant: check it first and TypeScript narrows `code` and `message` into existence.
+
+| `code`                          | Meaning                                     |
+| ------------------------------- | ------------------------------------------- |
+| `NOT_INITIALIZED`               | `init()` has not finished yet.              |
+| `APPLE_PAY_UNSUPPORTED_BROWSER` | This browser cannot run Apple Pay.          |
+| `APPLE_PAY_NOT_ENABLED`         | Apple Pay is not enabled for your business. |
+
+The codes and messages are the same ones `mount()` throws for the same conditions, and when more than one applies you get the one `mount()` would report first — in the order listed above.
+
+#### What `available: true` does and does not promise
+
+It means the browser exposes Apple Pay **and** your business has it enabled. It does **not** promise the payment sheet will open: no synchronous check can. In the iOS Simulator, for example, the browser reports it can make payments, the button renders, and Apple dismisses the sheet the moment it is tapped. Treat `true` as "render the button" and handle what happens after the tap through `config.events.payment`.
+
+```ts
+const availability = tonder.isApplePayAvailable();
+
+if (availability.available) {
+  await tonder.create('apple_pay_button', { payment }).mount();
+} else {
+  console.info('Apple Pay hidden:', availability.code, availability.message);
+}
+```
+
+### `tonder.create('apple_pay_button', options)`
+
+Creates the Apple Pay button component. The SDK renders the button and handles the click; call `mount()` to render it. Results arrive on `config.events.payment`, not as a return value.
+
+#### Request
+
+```ts
+interface ApplePayButtonOptions {
+  /** Container selector. Defaults to '#tonder-apple-pay-button'. */
+  container_id?: string;
+  /**
+   * Payment data for the charge. Pass an object for a fixed amount, or a
+   * SYNCHRONOUS function for a cart that can change after mount.
+   */
+  payment: ApplePayPaymentInput | (() => ApplePayPaymentInput);
+}
+```
+
+`ApplePayPaymentInput` accepts `amount`, `currency`, `return_url`, `client_reference`, `metadata`, `billing_address` and `idempotency_key` — every field `pay()` takes, and each one is sent on the charge. The single field it does not accept is `payment_method`, because the button already is one.
+
+Style the button through [`customization.apple_pay_button`](#customizationapple_pay_button) on `createTonder()`. The Apple Pay mark itself cannot be replaced — see [The logo cannot be replaced](#the-logo-cannot-be-replaced).
+
+#### Response
+
+```ts
+interface ApplePayButtonComponent {
+  mount(): Promise<void>;
+  unmount(): void;
+}
+```
+
+#### Throws
+
+| Code                      | When                          |
+| ------------------------- | ----------------------------- |
+| `INVALID_PAYMENT_REQUEST` | `options.payment` is missing. |
+
+### `apple_pay_button.mount()`
+
+Renders the Apple Pay button into `container_id`. Calling it again replaces the rendered button.
+
+#### Throws
+
+| Code                            | When                                           |
+| ------------------------------- | ---------------------------------------------- |
+| `NOT_INITIALIZED`               | `init()` has not completed.                    |
+| `APPLE_PAY_UNSUPPORTED_BROWSER` | This browser cannot run Apple Pay.             |
+| `APPLE_PAY_NOT_ENABLED`         | Apple Pay is not enabled for your business.    |
+| `APPLE_PAY_CONTAINER_NOT_FOUND` | No element on the page matches `container_id`. |
+
+### `apple_pay_button.unmount()`
+
+Removes the button and dismisses the payment sheet if one is open. Safe to call more than once.
+
+Skip it on a client-side route change and the open sheet can still be authorized, charging with the payment data captured before you navigated away — see [Component lifecycle](#component-lifecycle).
 
 ### `tonder.pay(input)`
 
@@ -457,18 +464,19 @@ APM/SPEI responses may include settlement fields:
 
 #### Throws
 
-| Code                                                            | When                                                                                                        |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `NOT_INITIALIZED`                                               | `tonder.init()` has not completed.                                                                          |
-| `MISSING_CUSTOMER`                                              | `session.customer` was not configured.                                                                      |
-| `INVALID_PAYMENT_REQUEST`                                       | `amount`, `return_url`, or `payment_method` is invalid.                                                     |
-| `INVALID_APM_CONFIG`                                            | `safetypayCash` or `safetypayTransfer` is missing `config.country`, `config.channel`, or `config.bank_ids`. |
-| `MOUNT_COLLECT_ERROR`                                           | Card fields cannot be collected.                                                                            |
-| `PAYMENT_PROCESS_ERROR`                                         | The payment request fails.                                                                                  |
-| `FETCH_TRANSACTION_ERROR`                                       | Hosted/3DS resolution cannot retrieve the transaction.                                                      |
-| `POLL_TIMEOUT_ERROR`                                            | Embedded card 3DS signaled completion, but reconciliation did not reach a final status in time.             |
-| `REQUEST_ABORTED`                                               | The embedded hosted-payment wait was canceled.                                                              |
-| `SAVE_CARD_ERROR`, `REMOVE_CARD_ERROR`, `CARD_ON_FILE_DECLINED` | Card-on-file setup or rollback fails.                                                                       |
+| Code                                                            | When                                                                                                                                                                      |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NOT_INITIALIZED`                                               | `tonder.init()` has not completed.                                                                                                                                        |
+| `MISSING_CUSTOMER`                                              | `session.customer` was not configured.                                                                                                                                    |
+| `SECURE_TOKEN_REQUIRED`                                         | `session.secure_token` was not configured, and this charge stores a card: `{ type: 'saved_card' }`, or `{ type: 'card' }` when Card on File is enabled for your business. |
+| `INVALID_PAYMENT_REQUEST`                                       | `amount`, `return_url`, or `payment_method` is invalid.                                                                                                                   |
+| `INVALID_APM_CONFIG`                                            | `safetypayCash` or `safetypayTransfer` is missing `config.country`, `config.channel`, or `config.bank_ids`.                                                               |
+| `MOUNT_COLLECT_ERROR`                                           | Card fields cannot be collected.                                                                                                                                          |
+| `PAYMENT_PROCESS_ERROR`                                         | The payment request fails.                                                                                                                                                |
+| `FETCH_TRANSACTION_ERROR`                                       | Hosted/3DS resolution cannot retrieve the transaction.                                                                                                                    |
+| `POLL_TIMEOUT_ERROR`                                            | Embedded card 3DS signaled completion, but reconciliation did not reach a final status in time.                                                                           |
+| `REQUEST_ABORTED`                                               | The embedded hosted-payment wait was canceled.                                                                                                                            |
+| `SAVE_CARD_ERROR`, `REMOVE_CARD_ERROR`, `CARD_ON_FILE_DECLINED` | Card-on-file setup or rollback fails.                                                                                                                                     |
 
 ### `tonder.getTransaction(id)`
 

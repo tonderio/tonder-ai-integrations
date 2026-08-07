@@ -130,19 +130,41 @@ Apple Pay works differently from every other method in this SDK: **the SDK rende
 
 Apple will not let a page take an Apple Pay payment until the domain serving that page is registered with Apple under Tonder's merchant identifier. This is a one-time setup step per domain, and it is the most common reason a correct integration fails in production.
 
-Ask Tonder to register the domain. You will receive a verification file to host at:
+It takes four steps, in this order:
 
-```
-https://<your-domain>/.well-known/apple-developer-merchantid-domain-association.txt
-```
+1. **Send Tonder every domain** that will show the Apple Pay button. Subdomains count separately — `checkout.yourstore.com` and `yourstore.com` are two registrations.
+2. **Tonder registers each domain** and sends you a verification file. Tonder generates its contents; you do not create it.
+3. **Host the file** on that domain, over HTTPS, under `/.well-known/`:
 
-It must be served over HTTPS from that exact path, byte for byte, before the domain is verified. Three details cost people the most time:
+   ```
+   https://<your-domain>/.well-known/<the file Tonder sent you>
+   ```
 
-- **Every domain is separate.** Staging, production, and any preview or vanity domain each need their own registration. A subdomain is a different domain.
-- **Some hosts hide dot-directories.** If your platform does not serve `/.well-known/` by default, you have to configure it. Open the URL in a browser and confirm you get the file, not a 404 or your app's HTML.
+   Keep the filename Tonder gave you, exactly. Do not rename it, do not re-save it, do not open it in an editor — its contents are matched byte for byte, and Apple fetches the exact name that was registered.
+
+4. **Tell Tonder it is live.** Tonder completes the verification with Apple and enables Apple Pay for that domain.
+
+Requirements for the response at that URL:
+
+| Requirement    | Detail                                                                                                                                                                                                                                                                                    |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Protocol       | HTTPS, publicly reachable.                                                                                                                                                                                                                                                                |
+| Redirects      | None. Apple states the domain cannot sit behind a proxy or a redirect — the URL has to serve the file itself.                                                                                                                                                                             |
+| Reachability   | Apple fetches this file from **your** server, so Apple's own IPs have to get through. If a WAF, firewall, CDN rule, or geo-block sits in front of your domain, allowlist the IP ranges Apple publishes for domain verification. Only you can do this — Tonder is not in the request path. |
+| Authentication | None. No login, no token.                                                                                                                                                                                                                                                                 |
+| `Content-Type` | `text/plain`, or none at all. Both work.                                                                                                                                                                                                                                                  |
+
+Three details cost people the most time:
+
+- **Every domain is separate.** Staging, production, and any preview or vanity domain each need their own registration.
+- **Some hosts hide dot-directories.** If your platform does not serve `/.well-known/` by default, you have to configure it.
 - **The domain the shopper sees is the one that matters** — the top-level page, not an iframe or a CDN host.
 
-Until this is done, the sheet opens and then closes, and `events.payment.on_error` reports `APPLE_PAY_VALIDATION_ERROR`.
+Before telling Tonder the file is live, open the URL yourself and check the response **body**, not just the status code. A single-page app with a catch-all route answers `200` with `index.html` for unknown paths, so the URL looks healthy while serving the wrong bytes.
+
+Until the domain is verified, the sheet opens and then closes, and `events.payment.on_error` reports `APPLE_PAY_VALIDATION_ERROR`.
+
+**Registering the domain and enabling Apple Pay on your account are two different steps**, and they fail differently. A verified domain with Apple Pay not yet enabled means `isApplePayAvailable()` returns `APPLE_PAY_NOT_ENABLED` and no button ever renders. An enabled account on an unregistered domain means the button renders, the sheet opens, and then it closes with `APPLE_PAY_VALIDATION_ERROR`. Ask Tonder to confirm both.
 
 Apple Pay is only offered when your business has it enabled and the shopper's browser supports it. Check first with `isApplePayAvailable()`, which returns `{ available: true }` or `{ available: false, code, message }`, and render the container only when `available` is `true`. When it is `false`, `code` tells you which of the three conditions failed — log it, because it is the difference between "this browser cannot" and "your account is not enabled".
 
@@ -152,8 +174,8 @@ Apple Pay is only offered when your business has it enabled and the shopper's br
 
 ```ts
 const tonder = createTonder({
-  api_key: 'pk_test_123',
-  environment: 'sandbox',
+  api_key: tonderPublicConfig.api_key,
+  environment: tonderPublicConfig.environment,
   session: { customer: { email: 'ada@example.com' } },
   events: {
     payment: {
@@ -223,7 +245,7 @@ If you need server-side data to build the charge, fetch it before the shopper cl
 
 #### Results
 
-There is no return value to await. Every outcome arrives on `config.events.payment`, which you can also assign after `createTonder()` — including when your original config had no `events` key at all. `events` is read at the moment each callback fires, so it stays live even though the rest of the config is copied at creation:
+There is no return value to await. Every outcome arrives on the `events.payment` callbacks you set at `createTonder()`:
 
 | Outcome                               | Callback                    |
 | ------------------------------------- | --------------------------- |
@@ -235,4 +257,4 @@ There is no return value to await. Every outcome arrives on `config.events.payme
 
 These callbacks are shared by the whole SDK instance: `pay()` fires them too, so one set of handlers covers every payment method you offer.
 
-Two error codes are specific to this flow and reach you through `on_error` once the sheet is already open: `APPLE_PAY_VALIDATION_ERROR` and `APPLE_PAY_SESSION_ERROR`. Both are listed under [Apple Pay](#apple-pay-1) in the error reference.
+Two error codes are specific to this flow and reach you through `on_error` once the sheet is already open: `APPLE_PAY_VALIDATION_ERROR` and `APPLE_PAY_SESSION_ERROR`. Both are listed under [Apple Pay errors](#apple-pay-errors) in the error reference.

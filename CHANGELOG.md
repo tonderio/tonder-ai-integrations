@@ -2,6 +2,17 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.16 - 2026-08-06
+
+### Changed
+
+- Synced the bundled Web SDK documentation from `main`. Three of the changes correct guidance agents were previously emitting:
+  - The Apple Pay button's `locale` used to map to `-apple-pay-button-locale`. **That CSS property does not exist** — Apple localizes the button from the `lang` attribute — so a generated integration setting `locale` produced an English button and no error. The SDK now sets `lang`, and the docs say so.
+  - `type` accepted 9 values; Apple defines 16. `add-money`, `contribute`, `reload`, `rent`, `support`, `tip`, and `top-up` were missing.
+  - The domain-verification file is now described by the path plus "the file Tonder sent you", instead of naming an extension. The previous wording named one, and the wrong name means Apple fetches a path the merchant's server does not serve.
+- The Apple Pay recipe now shows `customization.apple_pay_button` in full. It referenced the field without ever demonstrating its shape, which left an agent to guess it.
+- The Web SDK docs also gained `width` as a supported field, `SECURE_TOKEN_REQUIRED` in `pay()`'s throws table, and a note that a plain card payment needs a secure token when Card on File is enabled for the business — an account setting, so the same snippet works for one merchant and fails for another.
+
 ## 0.1.15 - 2026-08-06
 
 ### Changed

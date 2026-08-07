@@ -70,3 +70,5 @@ card_fields.unmount();
 ```
 
 Whether that final `unmount()` is optional or required depends on how your checkout navigates — see [Component lifecycle](#component-lifecycle).
+
+**If this throws `SECURE_TOKEN_REQUIRED`, your business has Card on File enabled.** A one-time card payment needs no `session.secure_token`, but when Card on File is on for your business the SDK stores the card as part of the charge, and storing a card always needs one. It is an account setting rather than something in your code, so the same snippet works for one business and fails for another. Add the token — [Backend secure token endpoint](#backend-secure-token-endpoint) — and it applies to every flow you build afterwards.

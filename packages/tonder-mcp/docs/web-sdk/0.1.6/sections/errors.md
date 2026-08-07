@@ -97,7 +97,7 @@ Use `error.code` for branching. Do not parse `error.message`; messages are for d
 | `VAULT_TOKEN_ERROR`   | The SDK could not prepare a secure card-fields session.         | `card_fields.mount()`, `card_fields.reveal()` | Verify merchant vault configuration and retry. |
 | `INVALID_VAULT_TOKEN` | Tonder returned an invalid secure card-fields session response. | `card_fields.mount()`, `card_fields.reveal()` | Retry and contact Tonder if it persists.       |
 
-### Apple Pay
+### Apple Pay errors
 
 The three codes in `apple_pay_button.mount()`'s Throws table are raised before anything is shown. These two arrive later, on `events.payment.on_error`, while the shopper is looking at the payment sheet.
 

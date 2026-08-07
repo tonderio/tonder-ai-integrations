@@ -5,8 +5,8 @@
   "package_json_url": "https://raw.githubusercontent.com/tonderio/web-sdk/main/package.json",
   "source": "https://raw.githubusercontent.com/tonderio/web-sdk/main/README.md",
   "source_url": "https://raw.githubusercontent.com/tonderio/web-sdk/main/README.md",
-  "sha256": "7eef2fa6df3b3f33c55d8f274e0579b510acd4a6db93fcee68c03bc9a4654808",
-  "generated_at": "2026-08-06T19:02:44.496Z",
+  "sha256": "2ea9830623964702ed2f9e9e3e87be4edf33181ddd5e6fa09c0d3cb4a3aafa7b",
+  "generated_at": "2026-08-07T03:01:52.539Z",
   "readme": "README.md",
   "recipes_from": "docs/web-sdk/recipes",
   "sections": {
@@ -30,10 +30,6 @@
       "title": "Public browser configuration",
       "path": "sections/public-browser-configuration.md"
     },
-    "backend-secure-token-endpoint": {
-      "title": "Backend secure token endpoint",
-      "path": "sections/backend-secure-token-endpoint.md"
-    },
     "quick-start-card-payment": {
       "title": "Quick start: card payment",
       "path": "sections/quick-start-card-payment.md"
@@ -45,6 +41,10 @@
     "core-concepts": {
       "title": "Core concepts",
       "path": "sections/core-concepts.md"
+    },
+    "backend-secure-token-endpoint": {
+      "title": "Backend secure token endpoint",
+      "path": "sections/backend-secure-token-endpoint.md"
     },
     "payment-flows": {
       "title": "Payment flows",
