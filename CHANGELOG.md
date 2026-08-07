@@ -2,6 +2,16 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.19 - 2026-08-07
+
+### Fixed
+
+- The skill would generate an Apple Pay integration against an npm install that cannot run it. npm's `latest` tag for `@tonder.io/web-sdk` is `0.1.5`, whose `TonderComponentType` is `'card_fields'` and which contains **zero** occurrences of `isApplePayAvailable` or `apple_pay_button` — Apple Pay shipped afterwards, and reaches merchants through the CDN channel.
+
+  In a TypeScript project this is a loud compile error. In a plain-JavaScript project it is silent: the bundler builds green, ships the missing call, and the page dies at load with `isApplePayAvailable is not a function` — which takes the entire checkout down, not just the Apple Pay button. A verified fixture run did exactly that: the agent installed `0.1.5`, wrote the Apple Pay lifecycle, and `vite build` passed.
+
+  The skill now verifies that the installed package actually exposes those symbols before writing code against them, and falls back to the CDN when they are missing. The check is written against the symbols rather than a version number, so it stops being relevant on its own once npm carries Apple Pay.
+
 ## 0.1.18 - 2026-08-07
 
 ### Fixed

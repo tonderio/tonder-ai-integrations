@@ -7,6 +7,9 @@ Three checkout projects used to exercise the `tonder-web-sdk-integrator` skill e
 | `01-html-plain` | Static HTML checkout, no payment provider | Fresh integration: framework detection, flow question, Apple Pay offered as an additive step, CDN loading |
 | `02-html-legacy-sdk` | `LiteInlineCheckout` wired up for card payments | Migration detection from the legacy SDK, and the fact that adding Apple Pay forces the migration |
 | `03-direct-api-node` | Node server posting to the Direct API for card, SPEI, and OXXO | Migration detection from a server-to-server integration, and the guide's incremental path that adds Apple Pay without touching the existing charge calls |
+| `04-angular-apple-pay` | Angular checkout with Apple Pay wired up, and the domain verification file dumped in the project root | Placing the verification file: `src/assets/.well-known/` plus the `angular.json` entry, because Angular does not copy dot-directories on its own |
+
+`04-angular-apple-pay` ships a fake `apple-developer-merchantid-domain-association.txt`. Its contents are nonsense on purpose — the test is whether the file is moved and wired into the build byte-for-byte, not what it says. Verify with a real build that it lands at `dist/<app>/browser/.well-known/`, not under `/assets/`.
 
 `03-direct-api-node` collects raw card data in the browser. That is deliberate — it is the pre-migration state the guide moves merchants away from, and the skill should say so.
 
