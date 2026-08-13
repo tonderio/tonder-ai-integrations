@@ -2,6 +2,14 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.21 - 2026-08-13
+
+### Changed
+
+- Synced the bundled Web SDK documentation to `0.1.7`. The Apple Pay button now ships defaults for all six customization fields — `check-out`, `black`, `en`, `100%`, `48px`, `8px` — and merges them field by field, so an agent that sets one no longer has to restate the rest.
+- Corrected the Apple Pay recipe, which told agents to omit `locale` to inherit the page language. That was true when only `type` and `style` had defaults; omitting it now yields `en`. A recipe that describes the previous release's behaviour is worse than one that says nothing, because it reads as deliberate.
+- The bundled docs also carry the payment method catalog's growth from 10 entries to 64. Every method the legacy SDK named now resolves to a label, so `getPaymentMethods()` results stop rendering as unnamed options.
+
 ## 0.1.20 - 2026-08-07
 
 ### Added
