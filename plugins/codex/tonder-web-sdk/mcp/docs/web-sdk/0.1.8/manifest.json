@@ -1,12 +1,12 @@
 {
   "sdk": "web-sdk",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "package_name": "@tonder.io/web-sdk",
   "package_json_url": "https://raw.githubusercontent.com/tonderio/web-sdk/main/package.json",
   "source": "https://raw.githubusercontent.com/tonderio/web-sdk/main/README.md",
   "source_url": "https://raw.githubusercontent.com/tonderio/web-sdk/main/README.md",
-  "sha256": "22fcc5b308cfc7e5bdd588ce096d0be7b82b23d64d29fe1ed23d2204d20eadc3",
-  "generated_at": "2026-08-13T17:55:06.531Z",
+  "sha256": "4fd7f9d4b2b784dd65557e7e0ad4f734f53a6f0e4a58f860a8cd2e1fc30e7909",
+  "generated_at": "2026-08-13T18:12:24.580Z",
   "readme": "README.md",
   "recipes_from": "docs/web-sdk/recipes",
   "sections": {

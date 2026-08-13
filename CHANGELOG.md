@@ -2,6 +2,15 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.22 - 2026-08-13
+
+### Changed
+
+- Synced the bundled Web SDK documentation to `0.1.8`, which removed the Apple Pay `locale` default. Apple documents the button's own default as "the current language and region setting in a browser", so an absent `locale` is answered per shopper rather than per merchant — better than any value the SDK could pick.
+- Corrected the Apple Pay recipe again. `0.1.21` had just changed it to say `locale` defaults to `'en'`, which was accurate for exactly one release. `locale` is now the one customization field with no default, and the recipe says so.
+
+  Worth recording why this keeps happening: the recipes are hand-written and the docs sync does not touch them, so a behaviour change in the SDK leaves them stating the previous release with full confidence. Nothing fails. Checking them by hand on every sync is the only thing that catches it.
+
 ## 0.1.21 - 2026-08-13
 
 ### Changed
