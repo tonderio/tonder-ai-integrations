@@ -6,3 +6,6 @@ dist/
 !plugins/*/*/mcp/dist/**
 .env
 .DS_Store
+
+# Machine-local tooling state: indexes one developer's skill installs by absolute path
+.atl/
