@@ -11,7 +11,7 @@
     {
       "name": "tonder-web-sdk",
       "description": "Integrate the Tonder Web SDK into browser-based web apps.",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "source": "./plugins/claude-code/tonder-web-sdk",
       "category": "development",
       "author": {

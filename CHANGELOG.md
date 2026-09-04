@@ -2,6 +2,16 @@
 
 All notable changes to this repository are documented here.
 
+## 0.1.23 - 2026-09-04
+
+### Changed
+
+- Synced the bundled Web SDK documentation to `0.1.9`. The snapshot content is unchanged: of the 32 files carried over from `0.1.8`, 31 are byte-identical and the only difference is `manifest.json`, which records the version and the generation timestamp. Nothing was added or removed.
+
+    That is worth stating rather than leaving implicit. `0.1.21` and `0.1.22` both had to correct a recipe because the SDK changed behaviour and the hand-written recipes kept describing the previous release. The check still has to happen on every sync — the difference here is that it was answered by comparing every file in both snapshots, not by reading them and forming an impression. This time there was nothing to correct.
+
+- Patched `postcss` and `nanoid` in the MCP lock file, and raised the `vite` devDependency in two example fixtures past the dev-server advisory. All three are build-time only and none reaches the shipped plugin payload.
+
 ## 0.1.22 - 2026-08-13
 
 ### Changed
